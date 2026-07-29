@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestão de Usuários</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #eef2f7 0%, #d9e2ec 100%);
+            color: #0f172a;
+        }
+        .page {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 24px;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+        }
+        h1 {
+            margin-bottom: 14px;
+            text-align: center;
+            font-size: 32px;
+        }
+        .note {
+            margin-bottom: 22px;
+            color: #475569;
+            font-size: 15px;
+            line-height: 1.7;
+            text-align: center;
+        }
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 22px;
+        }
+        .actions button {
+            min-width: 180px;
+            height: 48px;
+            border: none;
+            border-radius: 10px;
+            padding: 0 20px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+            background: #16a34a;
+            transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+        }
+        .actions button:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+        .actions .btn-secondary {
+            background: #2563eb;
+        }
+        .actions .btn-danger {
+            background: #dc2626;
+        }
+        .statusMessage {
+            margin-bottom: 20px;
+            padding: 14px 18px;
+            border-radius: 12px;
+            background: #e6f4ea;
+            border: 1px solid #c6e7d7;
+            color: #175c2d;
+            font-size: 15px;
+            text-align: center;
+            display: none;
+        }
+        .form-area {
+            margin-bottom: 24px;
+            padding: 22px;
+            border-radius: 18px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            display: none;
+        }
+        .form-area.active {
+            display: block;
+        }
+        .form-row {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .campo {
+            display: flex;
+            flex-direction: column;
+        }
+        .campo label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        .campo input,
+        .campo select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            background: #ffffff;
+            font-size: 15px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .campo input:focus,
+        .campo select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+        }
+        .form-buttons {
+            margin-top: 18px;
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .form-buttons button {
+            background: #2563eb;
+        }
+        .form-buttons .btn-cancel {
+            background: #6b7280;
+        }
+        .results {
+            overflow-x: auto;
+            border-radius: 18px;
+            border: 1px solid #e2e8f0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1040px;
+        }
+        thead {
+            background: #f1f5f9;
+        }
+        th, td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        th {
+            font-weight: 700;
+        }
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+        .empty-state {
+            padding: 28px 20px;
+            color: #475569;
+            text-align: center;
+            font-size: 16px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-WjEM+qOLZJ9+eYVGz01+FtXqcdLcCrc+N4hHGouTcmuV2N7mJaMxLDMiOAXfWiN+5ZNx3SeQdbPw7ZsboYGpRQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+    <div class="page">
+        <h1>Gestão de Usuários</h1>
+        <p class="note">Esta página mantém todos os usuários cadastrados e suas senhas. Use os botões para criar um novo usuário.</p>
+
+        <div class="actions">
+            <button id="btnNewUser">Novo Usuário</button>
+            <button id="btnRefresh" class="btn-secondary">Atualizar Lista</button>
+            <button id="btnDownloadPdf" class="btn-secondary">Gerar PDF</button>
+            <button id="btnHome" class="btn-secondary">Voltar</button>
+        </div>
+
+        <div id="statusMessage" class="statusMessage"></div>
+
+        <div id="userForm" class="form-area">
+            <h2 id="formTitle">Cadastrar novo usuário</h2>
+            <div class="form-row">
+                <div class="campo">
+                    <label for="userProfessorName">Nome do Professor</label>
+                    <input type="text" id="userProfessorName" placeholder="Nome do Professor" required minlength="3">
+                </div>
+                <div class="campo">
+                    <label for="userEmail">E-mail</label>
+                    <input type="email" id="userEmail" placeholder="usuario@profe.sed.sc.gov.br" required>
+                </div>
+                <div class="campo">
+                    <label for="userPassword">Senha</label>
+                    <input type="text" id="userPassword" placeholder="Senha" required>
+                </div>
+                <div class="campo">
+                    <label for="userCity">Cidade</label>
+                    <select id="userCity" required>
+                        <option value="" disabled selected>Selecione a cidade</option>
+                        <option value="Joinville">Joinville</option>
+                        <option value="Criciúma">Criciúma</option>
+                        <option value="Timbó">Timbó</option>
+                        <option value="Blumenau">Blumenau</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-buttons">
+                <button id="btnSaveUser">Salvar usuário</button>
+                <button id="btnCancelUser" type="button" class="btn-cancel">Cancelar</button>
+            </div>
+        </div>
+
+        <div class="results">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome do Professor</th>
+                        <th>E-mail</th>
+                        <th>Senha</th>
+                        <th>Cidade</th>
+                    </tr>
+                </thead>
+                <tbody id="usersBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const usersBody = document.getElementById('usersBody');
+        const btnNewUser = document.getElementById('btnNewUser');
+        const btnRefresh = document.getElementById('btnRefresh');
+        const btnDownloadPdf = document.getElementById('btnDownloadPdf');
+        const btnHome = document.getElementById('btnHome');
+        const userForm = document.getElementById('userForm');
+        const formTitle = document.getElementById('formTitle');
+        const statusMessage = document.getElementById('statusMessage');
+        const userProfessorName = document.getElementById('userProfessorName');
+        const userEmail = document.getElementById('userEmail');
+        const userPassword = document.getElementById('userPassword');
+        const userCity = document.getElementById('userCity');
+        const btnSaveUser = document.getElementById('btnSaveUser');
+        const btnCancelUser = document.getElementById('btnCancelUser');
+
+        const API_BASE = '/api';
+
+        let currentUsers = [];
+
+        async function apiRequest(path, options = {}) {
+            const response = await fetch(API_BASE + path, {
+                method: options.method || 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(options.headers || {})
+                },
+                credentials: 'include',
+                body: options.body ? JSON.stringify(options.body) : undefined
+            });
+
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (error) {
+                data = null;
+            }
+
+            if (!response.ok) {
+                const message = data && data.message ? data.message : 'Falha na comunicacao com o servidor.';
+                throw new Error(message);
+            }
+            return data;
+        }
+
+        function isAllowedEmail(email) {
+            return typeof email === 'string' && email.toLowerCase().endsWith('@profe.sed.sc.gov.br');
+        }
+
+        function showStatus(message, success = true) {
+            statusMessage.textContent = message;
+            statusMessage.style.display = 'block';
+            statusMessage.style.backgroundColor = success ? '#e6f4ea' : '#fce8e6';
+            statusMessage.style.color = success ? '#175c2d' : '#991b1b';
+            statusMessage.style.borderColor = success ? '#c6e7d7' : '#f5c2c7';
+            setTimeout(function() {
+                statusMessage.style.display = 'none';
+            }, 3000);
+        }
+
+        function renderUsers() {
+            usersBody.innerHTML = '';
+            if (!currentUsers.length) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td class="empty-state" colspan="4">Nenhum usuario cadastrado.</td>';
+                usersBody.appendChild(row);
+                return;
+            }
+
+            currentUsers.forEach((user) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${user.professorName || ''}</td>
+                    <td>${user.email || ''}</td>
+                    <td>********</td>
+                    <td>${user.city || ''}</td>
+                `;
+                usersBody.appendChild(tr);
+            });
+        }
+
+        function resetForm() {
+            formTitle.textContent = 'Cadastrar novo usuario';
+            userProfessorName.value = '';
+            userEmail.value = '';
+            userPassword.value = '';
+            userCity.value = '';
+            userForm.classList.remove('active');
+        }
+
+        function openForm(edit = false) {
+            userForm.classList.add('active');
+            if (!edit) {
+                formTitle.textContent = 'Cadastrar novo usuario';
+                userProfessorName.value = '';
+                userEmail.value = '';
+                userPassword.value = '';
+                userCity.value = '';
+            }
+        }
+
+        async function loadSessionAndUsers() {
+            let me = null;
+            try {
+                const meResult = await apiRequest('/auth/me');
+                me = meResult.user || null;
+            } catch (error) {
+                window.location.href = 'gestaoatestados2.html';
+                return;
+            }
+
+            if (!me || me.role !== 'admin') {
+                alert('Acesso negado. Apenas administradores podem acessar esta pagina.');
+                window.location.href = 'gestaoatestados2.html';
+                return;
+            }
+
+            await refreshUsers();
+        }
+
+        async function refreshUsers() {
+            try {
+                const result = await apiRequest('/users');
+                currentUsers = Array.isArray(result.users) ? result.users : [];
+                renderUsers();
+            } catch (error) {
+                showStatus(error.message, false);
+            }
+        }
+
+        btnNewUser.addEventListener('click', function() {
+            openForm(false);
+        });
+
+        btnRefresh.addEventListener('click', function() {
+            refreshUsers();
+        });
+
+        btnDownloadPdf.addEventListener('click', function() {
+            generatePdf();
+        });
+
+        btnHome.addEventListener('click', function() {
+            window.location.href = 'gestaoatestados2.html';
+        });
+
+        btnCancelUser.addEventListener('click', function() {
+            resetForm();
+        });
+
+        btnSaveUser.addEventListener('click', async function() {
+            const professorName = userProfessorName.value.trim();
+            const email = userEmail.value.trim().toLowerCase();
+            const password = userPassword.value.trim();
+            const city = userCity.value;
+
+            if (!professorName || !email || !city || !password) {
+                showStatus('Preencha todos os campos obrigatorios.', false);
+                return;
+            }
+            if (!isAllowedEmail(email)) {
+                showStatus('O e-mail deve terminar em @profe.sed.sc.gov.br.', false);
+                return;
+            }
+
+            try {
+                await apiRequest('/users', {
+                    method: 'POST',
+                    body: {
+                        professorName,
+                        email,
+                        city,
+                        role: 'user',
+                        password
+                    }
+                });
+                showStatus('Usuario criado com sucesso.');
+
+                await refreshUsers();
+                resetForm();
+            } catch (error) {
+                showStatus(error.message, false);
+            }
+        });
+
+        function generatePdf() {
+            if (!currentUsers.length) {
+                showStatus('Nao ha usuarios para gerar PDF.', false);
+                return;
+            }
+
+            const doc = new jspdf.jsPDF();
+            doc.setFontSize(18);
+            doc.text('Lista de Usuarios', 14, 22);
+            doc.setFontSize(11);
+            const lineHeight = 8;
+            let y = 34;
+            doc.text('Professor', 14, y);
+            doc.text('E-mail', 60, y);
+            doc.text('Senha', 120, y);
+            doc.text('Cidade', 170, y);
+            y += lineHeight;
+            doc.setDrawColor(0);
+            doc.line(14, y - 4, 196, y - 4);
+
+            currentUsers.forEach((user) => {
+                if (y > 280) {
+                    doc.addPage();
+                    y = 20;
+                }
+                doc.text(user.professorName || '', 14, y);
+                doc.text(user.email || '', 60, y);
+                doc.text('********', 120, y);
+                doc.text(user.city || '', 170, y);
+                y += lineHeight;
+            });
+
+            doc.save('usuarios.pdf');
+        }
+
+        loadSessionAndUsers();
+    </script>
+</body>
+</html>

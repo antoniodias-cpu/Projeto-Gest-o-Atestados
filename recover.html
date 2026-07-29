@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar Senha</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #eef2f7 0%, #d9e2ec 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .card {
+            width: 100%;
+            max-width: 520px;
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 18px 36px rgba(15, 23, 42, 0.1);
+        }
+        h1 { margin-top: 0; margin-bottom: 10px; color: #0f172a; font-size: 24px; }
+        p { color: #475569; font-size: 14px; line-height: 1.6; margin: 8px 0 14px; }
+        .campo { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; color: #1f2937; font-size: 13px; }
+        input {
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 11px 12px;
+            font-size: 14px;
+        }
+        .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+        button {
+            border: none;
+            border-radius: 10px;
+            padding: 11px 14px;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+            background: #2563eb;
+        }
+        .secondary { background: #6b7280; }
+        .message {
+            margin-top: 14px;
+            display: none;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 13px;
+            border: 1px solid transparent;
+        }
+        .ok { background: #e6f4ea; color: #14532d; border-color: #c6e7d7; }
+        .error { background: #fce8e6; color: #991b1b; border-color: #f3c5c2; }
+        code {
+            word-break: break-all;
+            background: #f1f5f9;
+            padding: 3px 6px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Recuperar Senha</h1>
+        <p>Passo 1: informe seu e-mail para gerar um token de redefinição.</p>
+
+        <div class="campo">
+            <label for="email">E-mail</label>
+            <input id="email" type="email" placeholder="professor@profe.sed.sc.gov.br">
+        </div>
+
+        <div class="actions">
+            <button id="btnRequest">Gerar Token</button>
+            <button id="btnBack" class="secondary">Voltar ao Login</button>
+        </div>
+
+        <p>Passo 2: cole o token e defina uma nova senha.</p>
+
+        <div class="campo">
+            <label for="token">Token de Recuperação</label>
+            <input id="token" type="text" placeholder="Cole o token aqui">
+        </div>
+
+        <div class="campo">
+            <label for="newPassword">Nova Senha</label>
+            <input id="newPassword" type="password" minlength="6" placeholder="Mínimo 6 caracteres">
+        </div>
+
+        <div class="actions">
+            <button id="btnReset">Redefinir Senha</button>
+        </div>
+
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        const email = document.getElementById('email');
+        const token = document.getElementById('token');
+        const newPassword = document.getElementById('newPassword');
+        const btnRequest = document.getElementById('btnRequest');
+        const btnReset = document.getElementById('btnReset');
+        const btnBack = document.getElementById('btnBack');
+        const message = document.getElementById('message');
+
+        function showMessage(text, ok) {
+            message.style.display = 'block';
+            message.className = 'message ' + (ok ? 'ok' : 'error');
+            message.innerHTML = text;
+        }
+
+        async function apiRequest(path, options = {}) {
+            const response = await fetch(API_BASE + path, {
+                method: options.method || 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: options.body ? JSON.stringify(options.body) : undefined
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(data.message || 'Falha na comunicacao com o servidor.');
+            }
+            return data;
+        }
+
+        btnRequest.addEventListener('click', async function() {
+            const value = email.value.trim().toLowerCase();
+            if (!value) {
+                showMessage('Informe o e-mail.', false);
+                return;
+            }
+            try {
+                const result = await apiRequest('/auth/password/forgot', {
+                    method: 'POST',
+                    body: { email: value }
+                });
+                if (result.resetToken) {
+                    token.value = result.resetToken;
+                    showMessage('Token gerado para ambiente local: <code>' + result.resetToken + '</code>', true);
+                } else {
+                    showMessage(result.message || 'Solicitação processada.', true);
+                }
+            } catch (error) {
+                showMessage(error.message, false);
+            }
+        });
+
+        btnReset.addEventListener('click', async function() {
+            const tokenValue = token.value.trim();
+            const newPasswordValue = newPassword.value;
+            if (!tokenValue || !newPasswordValue) {
+                showMessage('Informe token e nova senha.', false);
+                return;
+            }
+            try {
+                const result = await apiRequest('/auth/password/reset', {
+                    method: 'POST',
+                    body: { token: tokenValue, newPassword: newPasswordValue }
+                });
+                showMessage(result.message || 'Senha redefinida com sucesso.', true);
+                setTimeout(function() {
+                    window.location.href = 'gestaoatestados2.html';
+                }, 1200);
+            } catch (error) {
+                showMessage(error.message, false);
+            }
+        });
+
+        btnBack.addEventListener('click', function() {
+            window.location.href = 'gestaoatestados2.html';
+        });
+
+        (function prefillTokenFromQuery() {
+            const params = new URLSearchParams(window.location.search);
+            const tokenFromUrl = params.get('token');
+            if (tokenFromUrl) {
+                token.value = tokenFromUrl;
+            }
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Atestados</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #eef2f7 0%, #d9e2ec 100%);
+            color: #1f2937;
+            font-size: 14px;
+        }
+
+        .page {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 24px;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+        }
+
+        h1 {
+            margin: 0 0 12px;
+            text-align: center;
+            font-size: 22px;
+            color: #0f172a;
+        }
+
+        .note {
+            margin: 8px 0 14px;
+            color: #475569;
+            font-size: 13px;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        .search-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin: 8px 0 16px;
+        }
+
+        .search-card {
+            background: #f8fafc;
+            border-radius: 18px;
+            border: 1px solid #e2e8f0;
+            padding: 14px;
+            display: grid;
+            gap: 10px;
+            min-height: 120px;
+        }
+
+        .search-card input {
+            width: 6ch;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 4px 10px;
+            font-size: 13px;
+            background: #ffffff;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .search-card button {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 12px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+
+        .search-card label {
+            font-weight: 600;
+            color: #0f172a;
+            font-size: 13px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 22px;
+        }
+
+        .actions button {
+            min-width: 120px;
+            height: 38px;
+            border: none;
+            border-radius: 10px;
+            padding: 0 14px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #ffffff;
+            background: #16a34a;
+            transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .search-card button {
+            min-width: 120px;
+            height: 38px;
+            border: none;
+            border-radius: 10px;
+            padding: 0 14px;
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #ffffff;
+            background: #16a34a;
+            transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .actions button:hover,
+        .search-card button:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        .actions .btn-secondary,
+        .actions .btn-danger {
+            background: #16a34a;
+        }
+
+        #btnProfessorOnline {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+
+        .btn-danger {
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.15);
+        }
+
+        .search-card input {
+            width: 6ch;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 4px 12px;
+            font-size: 13px;
+            background: #ffffff;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .search-card input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.16);
+        }
+
+        .search-card button {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 18px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+
+        .search-card button:hover {
+            opacity: 0.94;
+        }
+
+        #btnTurma1,
+        #btnTurma2,
+        #btnTurma3,
+        #btnTurma4,
+        #btnTurma5,
+        #btnTurma6,
+        #btnTurma7,
+        #btnTurma8,
+        #btnTurma9,
+        #btnTurma10,
+        #btnTurma11,
+        #btnTurma12,
+        #btnTurma13 {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        }
+
+        .results {
+            overflow-x: auto;
+            border-radius: 18px;
+            border: 1px solid #e2e8f0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 980px;
+            font-size: 12px;
+        }
+
+        thead {
+            background: #f1f5f9;
+        }
+
+        th, td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+            color: #0f172a;
+            font-size: 12px;
+            line-height: 1.3;
+        }
+
+        th {
+            font-weight: 700;
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .empty-state {
+            padding: 20px 14px;
+            color: #475569;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        body.is-printing .search-row,
+        body.is-printing .actions {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <h1 id="pageTitle">Relatório de Atestados</h1>
+        <p class="note">Controle de atestados e faltas justificadas e injustificadas. Lembrando que justificado = Falta Abonada. No diário online deve ser justificada a falta - FJ</p>
+
+        <div class="search-row">
+            <div class="search-card">
+                <input id="turma1Search" type="text" placeholder="Buscar Turma 1" />
+                <button id="btnTurma1">Buscar Turma 1</button>
+            </div>
+
+            <div class="search-card">
+                <input id="turma2Search" type="text" placeholder="Buscar Turma 2" />
+                <button id="btnTurma2">Buscar Turma 2</button>
+            </div>
+
+            <div class="search-card">
+                <input id="turma3Search" type="text" placeholder="Buscar Turma 3" />
+                <button id="btnTurma3">Buscar Turma 3</button>
+            </div>
+
+            <div class="search-card">
+                <input id="turma4Search" type="text" placeholder="Buscar Turma 4" />
+                <button id="btnTurma4">Buscar Turma 4</button>
+            </div>
+
+            <div class="search-card">
+                <input id="turma5Search" type="text" placeholder="Buscar Turma 5" />
+                <button id="btnTurma5">Buscar Turma 5</button>
+            </div>
+
+            <div class="search-card">
+                <input id="turma6Search" type="text" placeholder="Buscar Turma 6" />
+                <button id="btnTurma6">Buscar Turma 6</button>
+            </div>
+
+            <div class="search-card">
+                <input id="turma7Search" type="text" placeholder="Buscar Turma 7" />
+                <button id="btnTurma7">Buscar Turma 7</button>
+            </div>
+
+            <div class="search-card">
+                <input id="turma8Search" type="text" placeholder="Buscar Turma 8" />
+                <button id="btnTurma8">Buscar Turma 8</button>
+            </div>
+
+            <div class="search-card">
+                <input id="turma9Search" type="text" placeholder="Buscar Turma 9" />
+                <button id="btnTurma9">Buscar Turma 9</button>
+            </div>
+
+            <div class="search-card">
+                <input id="turma10Search" type="text" placeholder="Buscar Turma 10" />
+                <button id="btnTurma10">Buscar Turma 10</button>
+            </div>
+
+            <div class="search-card">
+                <input id="turma11Search" type="text" placeholder="Buscar Turma 11" />
+                <button id="btnTurma11">Buscar Turma 11</button>
+            </div>
+
+            <div class="search-card">
+                <input id="turma12Search" type="text" placeholder="Buscar Turma 12" />
+                <button id="btnTurma12">Buscar Turma 12</button>
+            </div>
+
+            <div class="search-card">
+                <input id="turma13Search" type="text" placeholder="Buscar Turma 13" />
+                <button id="btnTurma13">Buscar Turma 13</button>
+            </div>
+
+            <div class="search-card">
+                <input id="turnoSearch" type="text" placeholder="Buscar Turno" />
+                <button id="btnTurno">Buscar por Turno</button>
+            </div>
+
+            <div class="search-card">
+                <input id="nomeSearch" type="text" placeholder="Buscar Nome" />
+                <button id="btnNome">Buscar Nome</button>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button id="btnVoltar" class="btn-secondary">Voltar</button>
+            <button id="btnLimpar" class="btn-secondary">Limpar Filtros</button>
+            <button id="btnPrint" class="btn-secondary">Imprimir</button>
+            <button id="btnProfessorOnline" class="btn-secondary">Professor Online SC</button>
+            <button id="btnSair" class="btn-danger">Registrar Atestado</button>
+        </div>
+
+        <div class="results">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome Completo</th>
+                        <th>Turma</th>
+                        <th>Turno</th>
+                        <th>Motivo</th>
+                        <th>Data de Entrega</th>
+                        <th>Data de Início</th>
+                        <th>Hora de Início</th>
+                        <th>Dia Início</th>
+                        <th>Data de Término</th>
+                        <th>Hora de Término</th>
+                        <th>Dia Término</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody">
+                        <tr class="empty-state-row">
+                            <td class="empty-state" colspan="11">Nenhum filtro aplicado. Insira a turma ou turno para ver resultados.</td>
+                        </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        const pageTitle = document.getElementById('pageTitle');
+        const nomeSearch = document.getElementById('nomeSearch');
+        const turma1Search = document.getElementById('turma1Search');
+        const turma2Search = document.getElementById('turma2Search');
+        const turma3Search = document.getElementById('turma3Search');
+        const turma4Search = document.getElementById('turma4Search');
+        const turma5Search = document.getElementById('turma5Search');
+        const turma6Search = document.getElementById('turma6Search');
+        const turma7Search = document.getElementById('turma7Search');
+        const turma8Search = document.getElementById('turma8Search');
+        const turma9Search = document.getElementById('turma9Search');
+        const turma10Search = document.getElementById('turma10Search');
+        const turma11Search = document.getElementById('turma11Search');
+        const turma12Search = document.getElementById('turma12Search');
+        const turma13Search = document.getElementById('turma13Search');
+        const turnoSearch = document.getElementById('turnoSearch');
+        const btnNome = document.getElementById('btnNome');
+        const btnTurma1 = document.getElementById('btnTurma1');
+        const btnTurma2 = document.getElementById('btnTurma2');
+        const btnTurma3 = document.getElementById('btnTurma3');
+        const btnTurma4 = document.getElementById('btnTurma4');
+        const btnTurma5 = document.getElementById('btnTurma5');
+        const btnTurma6 = document.getElementById('btnTurma6');
+        const btnTurma7 = document.getElementById('btnTurma7');
+        const btnTurma8 = document.getElementById('btnTurma8');
+        const btnTurma9 = document.getElementById('btnTurma9');
+        const btnTurma10 = document.getElementById('btnTurma10');
+        const btnTurma11 = document.getElementById('btnTurma11');
+        const btnTurma12 = document.getElementById('btnTurma12');
+        const btnTurma13 = document.getElementById('btnTurma13');
+        const btnTurno = document.getElementById('btnTurno');
+        const btnVoltar = document.getElementById('btnVoltar');
+        const btnLimpar = document.getElementById('btnLimpar');
+        const btnPrint = document.getElementById('btnPrint');
+        const btnProfessorOnline = document.getElementById('btnProfessorOnline');
+        const btnSair = document.getElementById('btnSair');
+        const resultsBody = document.getElementById('resultsBody');
+        const turmaSearchInputs = [
+            turma1Search,
+            turma2Search,
+            turma3Search,
+            turma4Search,
+            turma5Search,
+            turma6Search,
+            turma7Search,
+            turma8Search,
+            turma9Search,
+            turma10Search,
+            turma11Search,
+            turma12Search,
+            turma13Search
+        ];
+
+        let filterDebounceTimer = null;
+
+        async function apiRequest(path, options = {}) {
+            const response = await fetch(API_BASE + path, {
+                method: options.method || 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(options.headers || {})
+                },
+                credentials: 'include',
+                cache: 'no-store',
+                body: options.body ? JSON.stringify(options.body) : undefined
+            });
+            const data = await response.json().catch(() => null);
+            if (!response.ok) {
+                throw new Error((data && data.message) || 'Falha na comunicacao com o servidor.');
+            }
+            return data;
+        }
+
+        function goToRecordForm() {
+            sessionStorage.setItem('forceCreateRecord', '1');
+            window.location.href = 'gestaoatestados2.html';
+        }
+
+        function renderResults(rows) {
+            resultsBody.innerHTML = '';
+            if (!rows.length) {
+                const emptyRow = document.createElement('tr');
+                emptyRow.className = 'empty-state-row';
+                emptyRow.innerHTML = '<td class="empty-state" colspan="11">Nenhum registro encontrado para os filtros informados.</td>';
+                resultsBody.appendChild(emptyRow);
+                return;
+            }
+
+            rows.forEach((row) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.nome || ''}</td>
+                    <td>${row.turma || ''}</td>
+                    <td>${row.turno || ''}</td>
+                    <td>${row.motivo || ''}</td>
+                    <td>${row.dataentrega || ''}</td>
+                    <td>${row.datainicio || ''}</td>
+                    <td>${row.horaInicio || ''}</td>
+                    <td>${row.diaInicio || ''}</td>
+                    <td>${row.datatermino || ''}</td>
+                    <td>${row.horaTermino || ''}</td>
+                    <td>${row.diaTermino || ''}</td>
+                `;
+                resultsBody.appendChild(tr);
+            });
+        }
+
+        async function filterData() {
+            const nomeFilter = nomeSearch.value.trim();
+            const turnoFilter = turnoSearch.value.trim();
+            const turmaFilters = turmaSearchInputs
+                .flatMap((input) => input.value.split(','))
+                .map((value) => value.trim())
+                .filter(Boolean);
+
+            const params = new URLSearchParams();
+            if (nomeFilter) params.set('nome', nomeFilter);
+            if (turnoFilter) params.set('turno', turnoFilter);
+            if (turmaFilters.length) params.set('turmas', turmaFilters.join(','));
+
+            try {
+                const query = params.toString();
+                const result = await apiRequest('/records' + (query ? ('?' + query) : ''));
+                renderResults(Array.isArray(result.records) ? result.records : []);
+            } catch (error) {
+                if (String(error.message || '').toLowerCase().includes('nao autenticado')) {
+                    window.location.href = 'gestaoatestados2.html';
+                    return;
+                }
+                alert(error.message);
+            }
+        }
+
+        [btnNome, btnTurma1, btnTurma2, btnTurma3, btnTurma4, btnTurma5, btnTurma6, btnTurma7, btnTurma8, btnTurma9, btnTurma10, btnTurma11, btnTurma12, btnTurma13, btnTurno].forEach((btn) => {
+            btn.addEventListener('click', function(event) {
+                event.preventDefault();
+                filterData();
+            });
+        });
+
+        [nomeSearch, turma1Search, turma2Search, turma3Search, turma4Search, turma5Search, turma6Search, turma7Search, turma8Search, turma9Search, turma10Search, turma11Search, turma12Search, turma13Search, turnoSearch].forEach((input) => {
+            input.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    filterData();
+                }
+            });
+        });
+
+        turmaSearchInputs.forEach((input) => {
+            input.addEventListener('input', function() {
+                clearTimeout(filterDebounceTimer);
+                filterDebounceTimer = setTimeout(function() {
+                    filterData();
+                }, 250);
+            });
+        });
+
+        btnLimpar.addEventListener('click', function(event) {
+            event.preventDefault();
+            nomeSearch.value = '';
+            turma1Search.value = '';
+            turma2Search.value = '';
+            turma3Search.value = '';
+            turma4Search.value = '';
+            turma5Search.value = '';
+            turma6Search.value = '';
+            turma7Search.value = '';
+            turma8Search.value = '';
+            turma9Search.value = '';
+            turma10Search.value = '';
+            turma11Search.value = '';
+            turma12Search.value = '';
+            turma13Search.value = '';
+            turnoSearch.value = '';
+            resultsBody.innerHTML = '<tr class="empty-state-row"><td class="empty-state" colspan="11">Nenhum filtro aplicado. Insira a turma ou turno para ver resultados.</td></tr>';
+            nomeSearch.focus();
+        });
+
+        btnPrint.addEventListener('click', function() {
+            document.body.classList.add('is-printing');
+            window.print();
+            setTimeout(function() {
+                document.body.classList.remove('is-printing');
+            }, 1200);
+        });
+
+        btnProfessorOnline.addEventListener('click', function() {
+            window.open('https://professoronline.sed.sc.gov.br/CadLoginProfCaptchaCopy1.aspx', '_blank');
+        });
+
+        btnVoltar.addEventListener('click', function() {
+            window.history.back();
+        });
+
+        btnSair.addEventListener('click', function() {
+            goToRecordForm();
+        });
+
+        (async function ensureSession() {
+            try {
+                const result = await apiRequest('/auth/me');
+                const professorName = (result && result.user && result.user.professorName) ? String(result.user.professorName).trim() : '';
+                const reportTitle = professorName
+                    ? 'Relatório de Atestados para o Professor ' + professorName
+                    : 'Relatório de Atestados para o Professor';
+                pageTitle.textContent = reportTitle;
+                document.title = reportTitle;
+            } catch (error) {
+                window.location.href = 'gestaoatestados2.html';
+            }
+        })();
+    </script>
+</body>
+</html>

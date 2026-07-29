@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registros de Atestados</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #eef2f7 0%, #d9e2ec 100%);
+            color: #0f172a;
+            font-size: 14px;
+        }
+        .page {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 24px;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+        }
+        h1 {
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 28px;
+        }
+        .note {
+            margin-bottom: 22px;
+            color: #475569;
+            text-align: center;
+            line-height: 1.7;
+            font-size: 15px;
+        }
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 22px;
+        }
+        .actions .btn-action {
+            min-width: 160px;
+            height: 44px;
+            border: none;
+            border-radius: 10px;
+            padding: 0 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+            background: #16a34a;
+            transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+        }
+        .actions .btn-action:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+        .btn-filter {
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.2);
+        }
+        #btnPdf {
+            background: #2563eb;
+        }
+        .actions .btn-logout {
+            background: #f97316;
+        }
+        .results {
+            overflow-x: auto;
+            border-radius: 18px;
+            border: 1px solid #e2e8f0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 980px;
+            font-size: 12px;
+        }
+        thead {
+            background: #f1f5f9;
+        }
+        th, td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+            font-size: 12px;
+            line-height: 1.3;
+        }
+        th {
+            font-weight: 700;
+        }
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+        .empty-state {
+            padding: 28px 20px;
+            color: #475569;
+            text-align: center;
+            font-size: 16px;
+        }
+        .statusMessage {
+            margin: 18px 0;
+            padding: 14px 18px;
+            border-radius: 12px;
+            background: #e6f4ea;
+            color: #175c2d;
+            border: 1px solid #c6e7d7;
+            font-size: 15px;
+            text-align: center;
+            display: none;
+        }
+        .footer-counter {
+            margin-top: 18px;
+            padding: 14px 18px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border: 1px solid #bfdbfe;
+            color: #0f172a;
+            font-weight: 700;
+            font-size: 15px;
+        }
+        .footer-counter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        .footer-counter-item {
+            background: rgba(255, 255, 255, 0.65);
+            border: 1px solid rgba(191, 219, 254, 0.95);
+            border-radius: 12px;
+            padding: 12px 10px;
+            text-align: center;
+        }
+        .footer-counter-item span {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #1e3a8a;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .footer-counter-item strong {
+            color: #0f172a;
+            font-size: 18px;
+        }
+        .chart-panel {
+            margin-top: 18px;
+            padding: 16px;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+        .chart-panel h2 {
+            margin: 0 0 12px;
+            text-align: center;
+            font-size: 18px;
+            color: #0f172a;
+        }
+        .chart-wrap {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 16px;
+            align-items: center;
+            justify-content: center;
+        }
+        .chart-canvas-box {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .chart-legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+        }
+        .chart-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 8px 10px;
+            font-size: 13px;
+            color: #0f172a;
+            font-weight: 600;
+        }
+        .chart-legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 999px;
+            flex: 0 0 12px;
+        }
+        @media (max-width: 760px) {
+            .chart-wrap {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <h1 id="pageTitle">Registros de Atestados</h1>
+        <p class="note">Os dados gravados na página de cadastro estão listados abaixo. Use os botões para voltar à página inicial ou encerrar a sessão.</p>
+        <div class="actions">
+            <button id="btnBack" class="btn-action btn-back">Registrar Atestado</button>
+            <button id="btnFilter" class="btn-action btn-filter">Filtrar Atestados</button>
+            <button id="btnPdf" class="btn-action btn-filter">Imprimir</button>
+            <button id="btnSelectAll" class="btn-action btn-filter">Selecionar Todos</button>
+            <button id="btnUnselectAll" class="btn-action btn-filter">Desmarcar Todos</button>
+            <button id="btnDelete" class="btn-action btn-danger">Apagar Registro</button>
+            <button id="btnLogout" class="btn-action btn-logout">Sair</button>
+        </div>
+        <p id="deleteNote" class="note" style="margin-bottom: 14px;">Apenas <strong>admin123@profe.sed.sc.gov.br</strong> ou <strong>supervisao@profe.sed.sc.gov.br</strong> podem apagar registros selecionados.</p>
+        <p id="deleteSuccess" class="statusMessage"></p>
+
+        <div class="results">
+            <table>
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Nome Completo</th>
+                        <th>Turma</th>
+                        <th>Justificado</th>
+                        <th>Turno</th>
+                        <th>Motivo</th>
+                        <th>Data de Entrega</th>
+                        <th>Data de Início</th>
+                        <th>Hora de Início</th>
+                        <th>Dia Início</th>
+                        <th>Data de Término</th>
+                        <th>Hora de Término</th>
+                        <th>Dia Término</th>
+                    </tr>
+                </thead>
+                <tbody id="recordsBody"></tbody>
+            </table>
+        </div>
+        <div class="chart-panel">
+            <h2>Percentual de Atestados por Turno</h2>
+            <div class="chart-wrap">
+                <div class="chart-canvas-box">
+                    <canvas id="turnoPieChart" width="240" height="240" aria-label="Gráfico de pizza por turno"></canvas>
+                </div>
+                <div class="chart-legend" id="turnoLegend">
+                    <div class="chart-legend-item"><span class="chart-legend-color" style="background:#2563eb"></span><span id="legendMatutino">Matutino: 0%</span></div>
+                    <div class="chart-legend-item"><span class="chart-legend-color" style="background:#16a34a"></span><span id="legendVespertino">Vespertino: 0%</span></div>
+                    <div class="chart-legend-item"><span class="chart-legend-color" style="background:#f59e0b"></span><span id="legendNoturno">Noturno: 0%</span></div>
+                    <div class="chart-legend-item"><span class="chart-legend-color" style="background:#7c3aed"></span><span id="legendEmiep">EMIEP: 0%</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="footer-counter" aria-live="polite">
+            <div class="footer-counter-grid">
+                <div class="footer-counter-item">
+                    <span>Matutino</span>
+                    <strong id="countMatutino">0</strong>
+                </div>
+                <div class="footer-counter-item">
+                    <span>Vespertino</span>
+                    <strong id="countVespertino">0</strong>
+                </div>
+                <div class="footer-counter-item">
+                    <span>Noturno</span>
+                    <strong id="countNoturno">0</strong>
+                </div>
+                <div class="footer-counter-item">
+                    <span>EMIEP</span>
+                    <strong id="countEmiep">0</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const recordsBody = document.getElementById('recordsBody');
+        const pageTitle = document.getElementById('pageTitle');
+        const btnBack = document.getElementById('btnBack');
+        const btnFilter = document.getElementById('btnFilter');
+        const btnPdf = document.getElementById('btnPdf');
+        const btnSelectAll = document.getElementById('btnSelectAll');
+        const btnUnselectAll = document.getElementById('btnUnselectAll');
+        const btnDelete = document.getElementById('btnDelete');
+        const btnLogout = document.getElementById('btnLogout');
+        const countMatutino = document.getElementById('countMatutino');
+        const countVespertino = document.getElementById('countVespertino');
+        const countNoturno = document.getElementById('countNoturno');
+        const countEmiep = document.getElementById('countEmiep');
+        const turnoPieChart = document.getElementById('turnoPieChart');
+        const legendMatutino = document.getElementById('legendMatutino');
+        const legendVespertino = document.getElementById('legendVespertino');
+        const legendNoturno = document.getElementById('legendNoturno');
+        const legendEmiep = document.getElementById('legendEmiep');
+
+        const API_BASE = '/api';
+        let currentUser = null;
+        let currentRecords = [];
+
+        async function apiRequest(path, options = {}) {
+            const response = await fetch(API_BASE + path, {
+                method: options.method || 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(options.headers || {})
+                },
+                credentials: 'include',
+                body: options.body ? JSON.stringify(options.body) : undefined
+            });
+            const data = await response.json().catch(() => null);
+            if (!response.ok) {
+                throw new Error((data && data.message) || 'Falha na comunicacao com o servidor.');
+            }
+            return data;
+        }
+
+        function goToRecordForm() {
+            sessionStorage.setItem('forceCreateRecord', '1');
+            window.location.href = 'gestaoatestados2.html';
+        }
+
+        function canDeleteRecords() {
+            if (!currentUser) return false;
+            const email = String(currentUser.email || '').toLowerCase();
+            return currentUser.role === 'admin' || email === 'supervisao@profe.sed.sc.gov.br';
+        }
+
+        function toPercent(value, total) {
+            if (!total) return '0.0%';
+            return ((value / total) * 100).toFixed(1) + '%';
+        }
+
+        function drawPieChart(counts) {
+            if (!turnoPieChart) return;
+            const ctx = turnoPieChart.getContext('2d');
+            if (!ctx) return;
+
+            const entries = [
+                { label: 'Matutino', value: counts.matutino, color: '#2563eb' },
+                { label: 'Vespertino', value: counts.vespertino, color: '#16a34a' },
+                { label: 'Noturno', value: counts.noturno, color: '#f59e0b' },
+                { label: 'EMIEP', value: counts.emiep, color: '#7c3aed' }
+            ];
+            const total = entries.reduce((sum, item) => sum + item.value, 0);
+
+            ctx.clearRect(0, 0, turnoPieChart.width, turnoPieChart.height);
+            const centerX = turnoPieChart.width / 2;
+            const centerY = turnoPieChart.height / 2;
+            const radius = 96;
+
+            if (!total) {
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#e2e8f0';
+                ctx.fill();
+                ctx.fillStyle = '#475569';
+                ctx.font = '600 14px Segoe UI';
+                ctx.textAlign = 'center';
+                ctx.fillText('Sem dados', centerX, centerY + 5);
+            } else {
+                let startAngle = -Math.PI / 2;
+                entries.forEach((entry) => {
+                    if (!entry.value) return;
+                    const slice = (entry.value / total) * Math.PI * 2;
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.arc(centerX, centerY, radius, startAngle, startAngle + slice);
+                    ctx.closePath();
+                    ctx.fillStyle = entry.color;
+                    ctx.fill();
+                    startAngle += slice;
+                });
+            }
+
+            if (legendMatutino) legendMatutino.textContent = 'Matutino: ' + toPercent(counts.matutino, total);
+            if (legendVespertino) legendVespertino.textContent = 'Vespertino: ' + toPercent(counts.vespertino, total);
+            if (legendNoturno) legendNoturno.textContent = 'Noturno: ' + toPercent(counts.noturno, total);
+            if (legendEmiep) legendEmiep.textContent = 'EMIEP: ' + toPercent(counts.emiep, total);
+        }
+
+        function updateCounter(records) {
+            const counts = {
+                matutino: 0,
+                vespertino: 0,
+                noturno: 0,
+                emiep: 0
+            };
+
+            (Array.isArray(records) ? records : []).forEach((record) => {
+                const turno = String(record && record.turno ? record.turno : '').trim().toLowerCase();
+                if (turno === 'matutino') counts.matutino += 1;
+                else if (turno === 'vespertino') counts.vespertino += 1;
+                else if (turno === 'noturno') counts.noturno += 1;
+                else if (turno === 'emiep') counts.emiep += 1;
+            });
+
+            if (countMatutino) countMatutino.textContent = String(counts.matutino);
+            if (countVespertino) countVespertino.textContent = String(counts.vespertino);
+            if (countNoturno) countNoturno.textContent = String(counts.noturno);
+            if (countEmiep) countEmiep.textContent = String(counts.emiep);
+            drawPieChart(counts);
+        }
+
+        function renderRecords(records) {
+            recordsBody.innerHTML = '';
+            if (!records.length) {
+                const row = document.createElement('tr');
+                row.innerHTML = '<td class="empty-state" colspan="13">Nenhum registro encontrado.</td>';
+                recordsBody.appendChild(row);
+                updateCounter(records);
+                return;
+            }
+
+            records.forEach((record) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><input type="checkbox" class="recordCheckbox" data-id="${record.id}" /></td>
+                    <td>${record.nome || ''}</td>
+                    <td>${record.turma || ''}</td>
+                    <td></td>
+                    <td>${record.turno || ''}</td>
+                    <td>${record.motivo || ''}</td>
+                    <td>${record.dataentrega || ''}</td>
+                    <td>${record.datainicio || ''}</td>
+                    <td>${record.horaInicio || ''}</td>
+                    <td>${record.diaInicio || ''}</td>
+                    <td>${record.datatermino || ''}</td>
+                    <td>${record.horaTermino || ''}</td>
+                    <td>${record.diaTermino || ''}</td>
+                `;
+                recordsBody.appendChild(tr);
+            });
+            updateCounter(records);
+        }
+
+        function updatePageTitle() {
+            pageTitle.textContent = 'Relatorio Geral de Atestados';
+        }
+
+        function updateDeleteUi() {
+            if (!canDeleteRecords()) {
+                btnDelete.disabled = true;
+                btnDelete.style.opacity = '0.65';
+                btnDelete.title = 'Apenas administradores ou supervisao podem apagar registros';
+            } else {
+                btnDelete.disabled = false;
+                btnDelete.style.opacity = '1';
+                btnDelete.title = '';
+            }
+        }
+
+        async function loadRecords() {
+            const response = await fetch(API_BASE + '/records', {
+                method: 'GET',
+                credentials: 'include',
+                cache: 'no-store'
+            });
+            const result = await response.json().catch(() => null);
+            if (!response.ok) {
+                throw new Error((result && result.message) || 'Falha na comunicacao com o servidor.');
+            }
+            currentRecords = Array.isArray(result.records) ? result.records : [];
+            renderRecords(currentRecords);
+        }
+
+        async function loadSession() {
+            try {
+                const result = await apiRequest('/auth/me');
+                currentUser = result.user || null;
+            } catch (error) {
+                window.location.href = 'gestaoatestados2.html';
+                return;
+            }
+            updatePageTitle();
+            updateDeleteUi();
+            await loadRecords();
+        }
+
+        btnBack.addEventListener('click', function() {
+            goToRecordForm();
+        });
+
+        btnFilter.addEventListener('click', function() {
+            window.location.href = 'planilha.html';
+        });
+
+        btnPdf.addEventListener('click', function() {
+            window.print();
+        });
+
+        btnSelectAll.addEventListener('click', function() {
+            const checkboxes = Array.from(document.querySelectorAll('.recordCheckbox'));
+            checkboxes.forEach(function(checkbox) {
+                checkbox.checked = true;
+            });
+        });
+
+        btnUnselectAll.addEventListener('click', function() {
+            const checkboxes = Array.from(document.querySelectorAll('.recordCheckbox'));
+            checkboxes.forEach(function(checkbox) {
+                checkbox.checked = false;
+            });
+        });
+
+        btnDelete.addEventListener('click', async function() {
+            if (!canDeleteRecords()) {
+                alert('Apenas administradores ou supervisao podem apagar registros.');
+                return;
+            }
+
+            const checkboxes = Array.from(document.querySelectorAll('.recordCheckbox:checked'));
+            if (!checkboxes.length) {
+                alert('Selecione pelo menos um registro para apagar.');
+                return;
+            }
+            if (!confirm('Tem certeza que deseja apagar os registros selecionados?')) {
+                return;
+            }
+
+            const ids = checkboxes
+                .map((checkbox) => Number(checkbox.dataset.id))
+                .filter((value) => Number.isInteger(value) && value > 0);
+
+            try {
+                await apiRequest('/records', { method: 'DELETE', body: { ids } });
+                await loadRecords();
+                const success = document.getElementById('deleteSuccess');
+                success.textContent = 'Registro(s) excluido(s) com sucesso!';
+                success.style.display = 'block';
+                setTimeout(function() { success.style.display = 'none'; }, 3000);
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        btnLogout.addEventListener('click', async function() {
+            try {
+                await apiRequest('/auth/logout', { method: 'POST' });
+            } catch (error) {
+            }
+            window.location.href = 'gestaoatestados2.html';
+        });
+
+        loadSession();
+    </script>
+</body>
+</html>

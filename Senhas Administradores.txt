@@ -1,0 +1,49 @@
+398812@profe.sed.sc.gov.br
+cedup1234
+
+375025@profe.sed.sc.gov.br
+cedup1234
+
+Na página planilha.html substitua a frase "Use os campos abaixo para pesquisar os registros por Nome, Turma, Turno ou Dia da Semana. Os resultados serão exibidos em tempo real na tabela." por "Controle de atestados e faltas justificadas e injustificadas. Lembrando que justificado = Falta Abonada. No diário online deve ser justificada a falta - FJ"
+
+
+652976@profe.sed.sc.gov.br
+cedup1234
+
+
+
+
+
+
+
+Como executar:
+
+Node (recomendado)
+No diretório node:
+npm install
+npm start
+Abrir: http://localhost:3000
+
+PHP
+Na raiz do projeto HTML:
+php -S localhost:8000 backend/php/router.php
+Abrir: http://localhost:8000
+
+Aqui...
+
+http://localhost:3000/gestaoatestados2.html
+
+Usuários iniciais criados automaticamente:
+
+admin123@profe.sed.sc.gov.br 
+Senha123
+
+supervisao@profe.sed.sc.gov.br 
+Senha123
+
+#ADD8E6
+
+
+
+
+na página gestaoatestados2.html ocultar os campos de busca Nome completo, Turma, Data de Entrega, Data de Início Hora de Início, Data de Término. Hora de Término e o radio button Turno e o radio button Selecione o Motivo do Atestado

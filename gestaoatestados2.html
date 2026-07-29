@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão e Controle de Atestados</title>
+    <style>
+        /* Design Moderno e Responsivo */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            position: relative;
+            background: linear-gradient(135deg, rgba(224,234,252,0.9) 0%, rgba(207,222,243,0.9) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+            font-size: 14px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://ocp.news/wp-content/uploads/2018/07/Cedup-Joinville.jpg');
+            background-position: center top;
+            background-repeat: no-repeat;
+            background-size: cover;
+            opacity: 0.8;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+            background: rgba(255, 255, 255, 0.95); 
+            padding: 35px 30px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        }
+
+        .welcomeLabel {
+            position: fixed;
+            top: 18px;
+            right: 22px;
+            background: rgba(255,255,255,0.95);
+            padding: 8px 12px;
+            border-radius: 10px;
+            box-shadow: 0 6px 18px rgba(15,23,42,0.08);
+            font-weight: 700;
+            color: #0f172a;
+            z-index: 1000;
+            display: none;
+            font-size: 14px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #2c3e50;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .titleCells {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .titleCell {
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            padding: 10px 12px;
+            text-align: center;
+            color: #1e293b;
+            background: #f8fafc;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .campo { 
+            margin-bottom: 20px; 
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .campo > label { 
+            display: block; 
+            margin-bottom: 7px; 
+            font-weight: 500; 
+            color: #5a6a85;
+            font-size: 13px;
+        }
+
+        input { 
+            width: 100%; 
+            padding: 12px 14px; 
+            border: 1px solid #dcdfe6; 
+            border-radius: 8px; 
+            font-size: 13px;
+            color: #333;
+            transition: all 0.3s ease;
+            outline: none;
+            background-color: #f9fafb;
+        }
+
+        input:focus {
+            border-color: #4a90e2;
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15);
+        }
+
+        .opcoes-radio {
+            display: flex;
+            justify-content: center;
+            gap: 22px;
+            flex-wrap: wrap;
+        }
+
+        .opcoes-radio label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .opcoes-radio label[for="obitoEntes"] {
+            white-space: nowrap;
+        }
+
+        .opcoes-radio input {
+            transform: scale(0.95);
+        }
+
+        button { 
+            background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+            color: white; 
+            padding: 14px; 
+            border: none; 
+            border-radius: 8px; 
+            width: 100%; 
+            cursor: pointer; 
+            font-size: 14px; 
+            font-weight: 600;
+            transition: transform 0.1s ease, opacity 0.2s ease;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+            margin-bottom: 15px;
+        }
+
+        button:hover { 
+            opacity: 0.95;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled { 
+            background: #a6c0fe; 
+            cursor: not-allowed; 
+            box-shadow: none;
+        }
+
+        /* Sair button override (orange) */
+        #btnLogout {
+            background: linear-gradient(135deg, #ff9a3c 0%, #ff7a00 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(255,154,60,0.2);
+        }
+        .inputError {
+            border-color: #dc2626;
+            background-color: #fef2f2;
+        }
+
+        .fieldError {
+            margin-top: 6px;
+            font-size: 13px;
+            color: #b91c1c;
+            min-height: 18px;
+        }
+
+        #mensagem,
+        #loginMensagem {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            font-size: 14px;
+            display: none; 
+            animation: fadeIn 0.3s ease;
+        }
+
+        .sucesso { background-color: #e6f4ea; color: #137333; border: 1px solid #dadce0; }
+        .erro { background-color: #fce8e6; color: #c5221f; border: 1px solid #dadce0; }
+        .enviando { background-color: #f1f3f4; color: #3c4043; border: 1px solid #dadce0; }
+
+        .restrictedNotice {
+            margin-top: 8px;
+            margin-bottom: 14px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            color: #9a3412;
+            font-size: 13px;
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div id="welcomeLabel" class="welcomeLabel">Bem Vindo</div>
+    <div class="container">
+        <div id="loginSection">
+            <div class="titleCells">
+                <div class="titleCell">Gestão e Controle de Atestados</div>
+                <div class="titleCell">UE - CEDUP "Dario G. Salles"</div>
+                <div class="titleCell">2026</div>
+            </div>
+            <form id="formLogin">
+                <div class="campo">
+                    <label for="email">E-mail</label>
+                    <input type="email" id="email" name="email" placeholder="admin@profe.sed.sc.gov.br" required>
+                </div>
+
+                <div class="campo">
+                    <label for="senha">Senha</label>
+                    <input type="password" id="senha" name="senha" placeholder="Senha" pattern="(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}" title="A senha precisa ter pelo menos 6 caracteres e conter letras e números." required minlength="6">
+                </div>
+
+                <button type="submit" id="btnLogin">Entrar</button>
+                <button type="button" id="btnRecover">Recuperar Senha</button>
+                <button type="button" id="btnShowRegister">Registrar novo usuário</button>
+                <div id="loginMensagem"></div>
+            </form>
+        </div>
+
+        <div id="registroSection" style="display: none;">
+            <div class="titleCells">
+                <div class="titleCell">Gestão e Controle de Atestados</div>
+                <div class="titleCell">UE - CEDUP "Dario G. Salles"</div>
+                <div class="titleCell">2026</div>
+            </div>
+            <form id="formCadastro">
+                <div class="campo restrictedField">
+                    <label for="nome">Nome Completo</label>
+                    <input type="text" id="nome" name="nome" placeholder="Ex: João Silva" required minlength="3">
+                </div>
+
+                <div class="campo restrictedField">
+                    <label for="turma">Turma</label>
+                    <input type="text" id="turma" name="turma" placeholder="1CONTMAT" required>
+                </div>
+
+                <div class="campo restrictedField">
+                    <label>Turno</label>
+                    <div class="opcoes-radio">
+                        <label for="turnoMatutino">
+                            <input type="radio" id="turnoMatutino" name="turno" value="Matutino" required> Matutino
+                        </label>
+                        <label for="turnoVespertino">
+                            <input type="radio" id="turnoVespertino" name="turno" value="Vespertino"> Vespertino
+                        </label>
+                        <label for="turnoNoturno">
+                            <input type="radio" id="turnoNoturno" name="turno" value="Noturno"> Noturno
+                        </label>
+                        <label for="turnoIntegral">
+                            <input type="radio" id="turnoIntegral" name="turno" value="EMIEP"> EMIEP
+                        </label>
+                    </div>
+                </div>
+
+                <div class="campo restrictedField">
+                    <label for="dataentrega">Data da Entrega</label>
+                    <input type="text" id="dataentrega" name="dataentrega" placeholder="DD/MM/AAAA" inputmode="numeric" pattern="\d{2}/\d{2}/\d{4}" maxlength="10" title="Use o formato DD/MM/AAAA" required>
+                    <div class="fieldError" id="errorDataEntrega"></div>
+                    <div id="weekdayResult" style="margin-top:8px; color:#155724; font-weight:600; display:none;"></div>
+                </div>
+
+                <div class="campo restrictedField">
+                    <label for="datainicio">Data de Início</label>
+                    <input type="text" id="datainicio" name="datainicio" placeholder="DD/MM/AAAA" inputmode="numeric" pattern="\d{2}/\d{2}/\d{4}" maxlength="10" title="Use o formato DD/MM/AAAA" required>
+                    <div class="fieldError" id="errorDataInicio"></div>
+                    <div id="weekdayInicioResult" style="margin-top:8px; color:#155724; font-weight:600; display:none;"></div>
+                </div>
+
+                <div class="campo restrictedField">
+                    <label for="datatermino">Data de Término</label>
+                    <input type="text" id="datatermino" name="datatermino" placeholder="DD/MM/AAAA" inputmode="numeric" pattern="\d{2}/\d{2}/\d{4}" maxlength="10" title="Use o formato DD/MM/AAAA" required>
+                    <div class="fieldError" id="errorDataTermino"></div>
+                    <div id="weekdayTerminoResult" style="margin-top:8px; color:#155724; font-weight:600; display:none;"></div>
+                </div>
+
+                <div class="campo restrictedField">
+                    <label for="horainicio">Hora de Início</label>
+                    <input type="time" id="horainicio" name="horainicio" placeholder="HH:MM" pattern="[0-2][0-9]:[0-5][0-9]" title="Use o formato HH:MM">
+                </div>
+
+                <div class="campo restrictedField">
+                    <label for="horatermino">Hora de Término</label>
+                    <input type="time" id="horatermino" name="horatermino" placeholder="HH:MM" pattern="[0-2][0-9]:[0-5][0-9]" title="Use o formato HH:MM">
+                </div>
+                
+                <div class="campo restrictedField">
+                    <label>Selecione o Motivo do Atestado</label>
+                    <div class="opcoes-radio">
+                        <label for="atestado">
+                            <input type="radio" id="atestado" name="motivo" value="Atestado" required> Atestado
+                        </label>
+                        <label for="declaracao">
+                            <input type="radio" id="declaracao" name="motivo" value="Declaração"> Declaração
+                        </label>
+                        <label for="obitoEntes">
+                            <input type="radio" id="obitoEntes" name="motivo" value="Óbito de Entes"> Óbito de Entes
+                        </label>
+                    </div>
+                </div>
+
+                <div id="restrictedNotice" class="restrictedNotice">
+                    Apenas admin123@profe.sed.sc.gov.br e supervisao@profe.sed.sc.gov.br podem visualizar e preencher os campos de registro de atestados.
+                </div>
+
+                <button type="submit" id="btnEnviar">Gravar Dados na Planilha</button>
+                <button type="button" id="btnAbrirPlanilha">Consultar Atestados Gravados</button>
+                <button type="button" id="btnAdmin">Admin</button>
+                <button type="button" id="btnLogout">Sair</button>
+
+                <div id="mensagem"></div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const loginSection = document.getElementById('loginSection');
+        const registroSection = document.getElementById('registroSection');
+        const formLogin = document.getElementById('formLogin');
+        const btnLogin = document.getElementById('btnLogin');
+        const btnShowRegister = document.getElementById('btnShowRegister');
+        const loginMsg = document.getElementById('loginMensagem');
+        const btnRecover = document.getElementById('btnRecover');
+        const formulario = document.getElementById('formCadastro');
+        const btnEnviar = document.getElementById('btnEnviar');
+        const msg = document.getElementById('mensagem');
+        const btnAbrirPlanilha = document.getElementById('btnAbrirPlanilha');
+        const btnAdmin = document.getElementById('btnAdmin');
+        const btnLogout = document.getElementById('btnLogout');
+        const emailInput = document.getElementById('email');
+        const senhaInput = document.getElementById('senha');
+
+        const dataEntregaInput = document.getElementById('dataentrega');
+        const weekdayResult = document.getElementById('weekdayResult');
+        const dataInicioInput = document.getElementById('datainicio');
+        const dataTerminoInput = document.getElementById('datatermino');
+        const weekdayInicioResult = document.getElementById('weekdayInicioResult');
+        const weekdayTerminoResult = document.getElementById('weekdayTerminoResult');
+        const errorDataEntrega = document.getElementById('errorDataEntrega');
+        const errorDataInicio = document.getElementById('errorDataInicio');
+        const errorDataTermino = document.getElementById('errorDataTermino');
+        const restrictedFields = Array.from(document.querySelectorAll('.restrictedField'));
+        const restrictedNotice = document.getElementById('restrictedNotice');
+        const editingStorageKey = 'editingRecord';
+
+        let editingRecordId = null;
+
+        const API_BASE = '/api';
+        let currentUser = null;
+
+        async function apiRequest(path, options = {}) {
+            const response = await fetch(API_BASE + path, {
+                method: options.method || 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(options.headers || {})
+                },
+                credentials: 'include',
+                body: options.body ? JSON.stringify(options.body) : undefined
+            });
+
+            const data = await response.json().catch(() => null);
+            if (!response.ok) {
+                throw new Error((data && data.message) || 'Falha na comunicacao com o servidor.');
+            }
+            return data;
+        }
+
+        function computeWeekdayFromDMY(value) {
+            if (!value) return null;
+            const parts = value.split('/').map(s => s.trim());
+            if (parts.length !== 3) return null;
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10);
+            const year = parseInt(parts[2], 10);
+            if (Number.isNaN(day) || Number.isNaN(month) || Number.isNaN(year)) return null;
+            const d = new Date(year, month - 1, day);
+            if (d.getFullYear() !== year || d.getMonth() !== month - 1 || d.getDate() !== day) return null;
+            const names = ['Domingo', 'Segunda', 'Terca', 'Quarta', 'Quinta', 'Sexta', 'Sabado'];
+            return names[d.getDay()];
+        }
+
+        function isValidDateFormat(value) {
+            if (!value) return false;
+            const normalized = value.trim();
+            const regex = /^(0[1-9]|[12]\d|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/;
+            if (!regex.test(normalized)) return false;
+            return computeWeekdayFromDMY(normalized) !== null;
+        }
+
+        function clearDateFieldErrors() {
+            const fields = [
+                { el: dataEntregaInput, errorEl: errorDataEntrega },
+                { el: dataInicioInput, errorEl: errorDataInicio },
+                { el: dataTerminoInput, errorEl: errorDataTermino }
+            ];
+            fields.forEach(field => {
+                field.el.classList.remove('inputError');
+                field.errorEl.textContent = '';
+            });
+            msg.style.display = 'none';
+        }
+
+        function validarDatas() {
+            clearDateFieldErrors();
+            const dateFields = [
+                { el: dataEntregaInput, errorEl: errorDataEntrega },
+                { el: dataInicioInput, errorEl: errorDataInicio },
+                { el: dataTerminoInput, errorEl: errorDataTermino }
+            ];
+            for (const field of dateFields) {
+                if (!isValidDateFormat(field.el.value)) {
+                    field.el.classList.add('inputError');
+                    field.errorEl.textContent = 'Use o formato DD/MM/AAAA valido.';
+                    field.el.focus();
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function updateWeekdayDisplay(inputEl, outputEl) {
+            const wd = computeWeekdayFromDMY(inputEl.value.trim());
+            if (wd) {
+                outputEl.style.display = 'block';
+                outputEl.textContent = 'Dia da semana: ' + wd;
+            } else {
+                outputEl.style.display = 'none';
+                outputEl.textContent = '';
+            }
+        }
+
+        dataEntregaInput.addEventListener('input', function() {
+            clearDateFieldErrors();
+            updateWeekdayDisplay(dataEntregaInput, weekdayResult);
+        });
+        dataEntregaInput.addEventListener('blur', function() { updateWeekdayDisplay(dataEntregaInput, weekdayResult); });
+        dataInicioInput.addEventListener('input', function() {
+            clearDateFieldErrors();
+            updateWeekdayDisplay(dataInicioInput, weekdayInicioResult);
+        });
+        dataInicioInput.addEventListener('blur', function() { updateWeekdayDisplay(dataInicioInput, weekdayInicioResult); });
+        dataTerminoInput.addEventListener('input', function() {
+            clearDateFieldErrors();
+            updateWeekdayDisplay(dataTerminoInput, weekdayTerminoResult);
+        });
+        dataTerminoInput.addEventListener('blur', function() { updateWeekdayDisplay(dataTerminoInput, weekdayTerminoResult); });
+
+        function showLogin(message, cssClass) {
+            if (message) {
+                loginMsg.style.display = 'block';
+                loginMsg.className = cssClass;
+                loginMsg.innerText = message;
+            } else {
+                loginMsg.style.display = 'none';
+            }
+            loginSection.style.display = 'block';
+            registroSection.style.display = 'none';
+        }
+
+        function showRegistro() {
+            loginSection.style.display = 'none';
+            registroSection.style.display = 'block';
+        }
+
+        function isAdminAccount() {
+            return !!currentUser && currentUser.role === 'admin';
+        }
+
+        function canSubmitRecord() {
+            if (!currentUser) return false;
+            const email = String(currentUser.email || '').toLowerCase();
+            return currentUser.role === 'admin' || email === 'supervisao@profe.sed.sc.gov.br';
+        }
+
+        function setRestrictedFieldsVisibility(canShow) {
+            restrictedFields.forEach(function(field) {
+                field.style.display = canShow ? '' : 'none';
+                const controls = field.querySelectorAll('input, select, textarea');
+                controls.forEach(function(control) {
+                    if (control.dataset.originalRequired === undefined) {
+                        control.dataset.originalRequired = control.required ? '1' : '0';
+                    }
+                    if (canShow) {
+                        control.required = control.dataset.originalRequired === '1';
+                    } else {
+                        control.required = false;
+                    }
+                });
+            });
+
+            if (restrictedNotice) {
+                restrictedNotice.style.display = canShow ? 'none' : 'block';
+            }
+        }
+
+        function setEditMode(record) {
+            if (!record || !record.id) {
+                editingRecordId = null;
+                btnEnviar.innerText = 'Gravar Dados na Planilha';
+                return;
+            }
+
+            editingRecordId = Number(record.id);
+            document.getElementById('nome').value = record.nome || '';
+            document.getElementById('turma').value = record.turma || '';
+            document.getElementById('dataentrega').value = record.dataentrega || '';
+            document.getElementById('datainicio').value = record.datainicio || '';
+            document.getElementById('horainicio').value = record.horaInicio || '';
+            document.getElementById('datatermino').value = record.datatermino || '';
+            document.getElementById('horatermino').value = record.horaTermino || '';
+
+            const turnoRadio = document.querySelector('input[name="turno"][value="' + (record.turno || '').replace(/"/g, '&quot;') + '"]');
+            if (turnoRadio) {
+                turnoRadio.checked = true;
+            }
+            const motivoRadio = document.querySelector('input[name="motivo"][value="' + (record.motivo || '').replace(/"/g, '&quot;') + '"]');
+            if (motivoRadio) {
+                motivoRadio.checked = true;
+            }
+
+            updateWeekdayDisplay(document.getElementById('dataentrega'), weekdayResult);
+            updateWeekdayDisplay(document.getElementById('datainicio'), weekdayInicioResult);
+            updateWeekdayDisplay(document.getElementById('datatermino'), weekdayTerminoResult);
+
+            btnEnviar.innerText = 'Gravar Dados na Planilha';
+            msg.style.display = 'block';
+            msg.className = 'enviando';
+            msg.innerText = 'Editando registro selecionado.';
+        }
+
+        function clearEditMode() {
+            editingRecordId = null;
+            btnEnviar.innerText = 'Gravar Dados na Planilha';
+            sessionStorage.removeItem(editingStorageKey);
+        }
+
+        function resetRecordForm() {
+            formulario.reset();
+            clearDateFieldErrors();
+            updateWeekdayDisplay(dataEntregaInput, weekdayResult);
+            updateWeekdayDisplay(dataInicioInput, weekdayInicioResult);
+            updateWeekdayDisplay(dataTerminoInput, weekdayTerminoResult);
+            msg.style.display = 'none';
+        }
+
+        function loadEditModeFromSession() {
+            try {
+                const raw = sessionStorage.getItem(editingStorageKey);
+                if (!raw) return;
+                const record = JSON.parse(raw);
+                if (record && typeof record === 'object') {
+                    setEditMode(record);
+                }
+            } catch (error) {
+                sessionStorage.removeItem(editingStorageKey);
+            }
+        }
+
+        function updateWelcome() {
+            const wl = document.getElementById('welcomeLabel');
+            if (currentUser && currentUser.email) {
+                const displayName = currentUser.professorName || currentUser.email;
+                wl.textContent = currentUser.city
+                    ? 'Bem Vindo - Professor ' + displayName + ' (' + currentUser.city + ')'
+                    : 'Bem Vindo - Professor ' + displayName;
+                wl.style.display = 'block';
+            } else {
+                wl.style.display = 'none';
+            }
+            if (btnAdmin) {
+                btnAdmin.style.display = isAdminAccount() ? 'block' : 'none';
+            }
+            if (btnEnviar) {
+                btnEnviar.style.display = canSubmitRecord() ? 'block' : 'none';
+            }
+            setRestrictedFieldsVisibility(canSubmitRecord());
+        }
+
+        async function loadSession() {
+            try {
+                const result = await apiRequest('/auth/me');
+                currentUser = result.user || null;
+                showRegistro();
+            } catch (error) {
+                currentUser = null;
+                showLogin('', '');
+                clearEditMode();
+            }
+            updateWelcome();
+            if (sessionStorage.getItem('forceCreateRecord') === '1') {
+                sessionStorage.removeItem('forceCreateRecord');
+                clearEditMode();
+                resetRecordForm();
+            } else {
+                loadEditModeFromSession();
+            }
+        }
+
+        btnShowRegister.addEventListener('click', function() {
+            window.location.href = 'newuser.html';
+        });
+
+        btnRecover.addEventListener('click', function() {
+            window.location.href = 'recover.html';
+        });
+
+        formLogin.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            btnLogin.disabled = true;
+            loginMsg.style.display = 'block';
+            loginMsg.className = 'enviando';
+            loginMsg.innerText = 'Validando...';
+
+            const email = emailInput.value.trim().toLowerCase();
+            const senha = senhaInput.value;
+
+            try {
+                const result = await apiRequest('/auth/login', {
+                    method: 'POST',
+                    body: { email, password: senha }
+                });
+                currentUser = result.user || null;
+                loginMsg.className = 'sucesso';
+                loginMsg.innerText = 'Acesso autorizado!';
+                showRegistro();
+                updateWelcome();
+            } catch (error) {
+                loginMsg.className = 'erro';
+                loginMsg.innerText = error.message;
+            } finally {
+                btnLogin.disabled = false;
+            }
+        });
+
+        formulario.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!canSubmitRecord()) {
+                msg.style.display = 'block';
+                msg.className = 'erro';
+                msg.innerText = 'Apenas usuarios autorizados podem gravar dados na planilha.';
+                return;
+            }
+            if (!validarDatas()) {
+                return;
+            }
+
+            btnEnviar.disabled = true;
+            msg.style.display = 'block';
+            msg.className = 'enviando';
+            msg.innerText = 'Gravando...';
+
+            const confirmMessage = editingRecordId
+                ? 'Confirma gravar a atualização deste registro?'
+                : 'Confirma gravar este registro?';
+            if (!confirm(confirmMessage)) {
+                btnEnviar.disabled = false;
+                msg.style.display = 'none';
+                return;
+            }
+
+            const record = {
+                nome: document.getElementById('nome').value.trim(),
+                turma: document.getElementById('turma').value.trim(),
+                turno: document.querySelector('input[name="turno"]:checked')?.value || '',
+                motivo: document.querySelector('input[name="motivo"]:checked')?.value || '',
+                dataentrega: document.getElementById('dataentrega').value.trim(),
+                datainicio: document.getElementById('datainicio').value.trim(),
+                horaInicio: document.getElementById('horainicio')?.value.trim() || '',
+                diaInicio: computeWeekdayFromDMY(document.getElementById('datainicio').value.trim()) || '',
+                datatermino: document.getElementById('datatermino').value.trim(),
+                horaTermino: document.getElementById('horatermino')?.value.trim() || '',
+                diaTermino: computeWeekdayFromDMY(document.getElementById('datatermino').value.trim()) || ''
+            };
+
+            try {
+                if (editingRecordId) {
+                    await apiRequest('/records/' + editingRecordId, { method: 'POST', body: record });
+                    msg.className = 'sucesso';
+                    msg.innerText = 'Registro atualizado com sucesso!';
+                } else {
+                    await apiRequest('/records', { method: 'POST', body: record });
+                    msg.className = 'sucesso';
+                    msg.innerText = 'Aluno cadastrado com sucesso!';
+                }
+                formulario.reset();
+                clearEditMode();
+                setTimeout(function() {
+                    window.location.href = 'register.html?updated=' + Date.now();
+                }, 700);
+            } catch (error) {
+                msg.className = 'erro';
+                msg.innerText = error.message;
+            } finally {
+                btnEnviar.disabled = false;
+            }
+        });
+
+        btnAbrirPlanilha.addEventListener('click', function() {
+            window.location.href = 'register.html';
+        });
+
+        if (btnAdmin) {
+            btnAdmin.addEventListener('click', function() {
+                if (!isAdminAccount()) {
+                    alert('Apenas administradores podem acessar a area Admin.');
+                    return;
+                }
+                window.location.href = 'user.html';
+            });
+        }
+
+        btnLogout.addEventListener('click', async function() {
+            try {
+                await apiRequest('/auth/logout', { method: 'POST' });
+            } catch (error) {
+            }
+            clearEditMode();
+            currentUser = null;
+            showLogin('', '');
+            updateWelcome();
+        });
+
+        loadSession();
+    </script>
+</body>
+</html>

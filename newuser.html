@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Novo Usuário</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(224,234,252,0.95) 0%, rgba(207,222,243,0.95) 100%);
+            padding: 20px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://ocp.news/wp-content/uploads/2018/07/Cedup-Joinville.jpg');
+            background-position: center top;
+            background-repeat: no-repeat;
+            background-size: cover;
+            opacity: 0.75;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 460px;
+            background: rgba(255,255,255,0.97);
+            padding: 34px 30px;
+            border-radius: 18px;
+            box-shadow: 0 16px 40px rgba(15,23,42,0.12);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 24px;
+            color: #1f2937;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .campo {
+            margin-bottom: 18px;
+        }
+
+        .campo label {
+            display: block;
+            margin-bottom: 8px;
+            color: #475569;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 13px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            background: #f8fafc;
+            color: #0f172a;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input:focus, select:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(37,99,235,0.12);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            cursor: pointer;
+            transition: transform 0.1s ease, opacity 0.2s ease;
+            box-shadow: 0 10px 22px rgba(37,99,235,0.18);
+            margin-bottom: 14px;
+        }
+
+        button:hover {
+            opacity: 0.95;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            background: #93c5fd;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        #registerMensagem {
+            margin-top: 18px;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            display: none;
+            text-align: center;
+        }
+
+        .sucesso { background-color: #ecfdf5; color: #166534; border: 1px solid #d1fae5; }
+        .erro { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .enviando { background-color: #e2e8f0; color: #1f2937; border: 1px solid #cbd5e1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Registrar novo usuário</h2>
+        <form id="formRegistrar">
+            <div class="campo">
+                <label for="registerEmail">E-mail</label>
+                <input type="email" id="registerEmail" name="registerEmail" placeholder="novo@profe.sed.sc.gov.br" required>
+            </div>
+
+            <div class="campo">
+                <label for="registerProfessorName">Nome do Professor</label>
+                <input type="text" id="registerProfessorName" name="registerProfessorName" placeholder="Nome do Professor" required minlength="3">
+            </div>
+
+            <div class="campo">
+                <label for="registerSenha">Senha</label>
+                <input type="password" id="registerSenha" name="registerSenha" placeholder="Senha" required minlength="6">
+            </div>
+
+            <div class="campo">
+                <label for="registerSenhaConfirm">Confirme a senha</label>
+                <input type="password" id="registerSenhaConfirm" name="registerSenhaConfirm" placeholder="Confirme a senha" required minlength="6">
+            </div>
+
+            <div class="campo">
+                <label for="registerCity">Cidade</label>
+                <select id="registerCity" name="registerCity" required>
+                    <option value="" disabled selected>Selecione a cidade</option>
+                    <option value="Joinville">Joinville</option>
+                    <option value="Criciúma">Criciúma</option>
+                    <option value="Timbó">Timbó</option>
+                    <option value="Blumenau">Blumenau</option>
+                </select>
+            </div>
+
+            <button type="submit" id="btnRegister">Criar conta</button>
+            <button type="button" id="btnCancelRegister">Voltar ao login</button>
+            <div id="registerMensagem"></div>
+        </form>
+    </div>
+
+    <script>
+        const formRegistrar = document.getElementById('formRegistrar');
+        const btnRegister = document.getElementById('btnRegister');
+        const btnCancelRegister = document.getElementById('btnCancelRegister');
+        const registerMsg = document.getElementById('registerMensagem');
+        const registerCity = document.getElementById('registerCity');
+        const API_BASE = '/api';
+
+        const allowedDomain = '@profe.sed.sc.gov.br';
+
+        function isAllowedEmail(email) {
+            return String(email || '').toLowerCase().endsWith(allowedDomain);
+        }
+
+        async function apiRequest(path, options = {}) {
+            const response = await fetch(API_BASE + path, {
+                method: options.method || 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(options.headers || {})
+                },
+                credentials: 'include',
+                body: options.body ? JSON.stringify(options.body) : undefined
+            });
+            const data = await response.json().catch(() => null);
+            if (!response.ok) {
+                throw new Error((data && data.message) || 'Falha na comunicacao com o servidor.');
+            }
+            return data;
+        }
+
+        btnCancelRegister.addEventListener('click', function() {
+            window.location.href = 'gestaoatestados2.html';
+        });
+
+        formRegistrar.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            btnRegister.disabled = true;
+            registerMsg.style.display = 'block';
+            registerMsg.className = 'enviando';
+            registerMsg.innerText = 'Registrando...';
+
+            const email = document.getElementById('registerEmail').value.trim().toLowerCase();
+            const professorName = document.getElementById('registerProfessorName').value.trim();
+            const senha = document.getElementById('registerSenha').value;
+            const confirmSenha = document.getElementById('registerSenhaConfirm').value;
+            const cidade = registerCity.value;
+
+            if (!email || !professorName || !senha || !confirmSenha || !cidade) {
+                registerMsg.className = 'erro';
+                registerMsg.innerText = 'Preencha todos os campos e selecione a cidade.';
+                btnRegister.disabled = false;
+                return;
+            }
+
+            if (senha !== confirmSenha) {
+                registerMsg.className = 'erro';
+                registerMsg.innerText = 'As senhas não coincidem.';
+                btnRegister.disabled = false;
+                return;
+            }
+
+            if (senha.length < 6) {
+                registerMsg.className = 'erro';
+                registerMsg.innerText = 'A senha precisa ter pelo menos 6 caracteres.';
+                btnRegister.disabled = false;
+                return;
+            }
+
+            if (!isAllowedEmail(email)) {
+                registerMsg.className = 'erro';
+                registerMsg.innerText = 'E-mail deve terminar com @profe.sed.sc.gov.br';
+                btnRegister.disabled = false;
+                return;
+            }
+
+            try {
+                await apiRequest('/auth/register', {
+                    method: 'POST',
+                    body: {
+                        email,
+                        professorName,
+                        password: senha,
+                        city: cidade
+                    }
+                });
+                registerMsg.className = 'sucesso';
+                registerMsg.innerText = `Usuario cadastrado com sucesso! Cidade: ${cidade}`;
+
+                setTimeout(function() {
+                    window.location.href = 'gestaoatestados2.html';
+                }, 700);
+            } catch (error) {
+                registerMsg.className = 'erro';
+                registerMsg.innerText = error.message;
+            } finally {
+                btnRegister.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
