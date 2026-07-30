@@ -6,13 +6,6 @@
     <title>Gestão e Controle de Atestados</title>
     <style>
         /* Design Moderno e Responsivo */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
         body {
             position: relative;
             background: linear-gradient(135deg, rgba(224,234,252,0.9) 0%, rgba(207,222,243,0.9) 100%);
@@ -229,6 +222,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
     </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="welcomeLabel" class="welcomeLabel">Bem Vindo</div>
@@ -384,7 +378,7 @@
 
         let editingRecordId = null;
 
-        const API_BASE = '/api';
+        const API_BASE = './api';
         let currentUser = null;
 
         async function apiRequest(path, options = {}) {
@@ -762,5 +756,6 @@
 
         loadSession();
     </script>
+    <script src="script.js"></script>
 </body>
 </html>
