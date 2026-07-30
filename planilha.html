@@ -348,7 +348,7 @@
     </div>
 
     <script>
-        const API_BASE = '/api';
+        const API_BASE = './api';
         const pageTitle = document.getElementById('pageTitle');
         const nomeSearch = document.getElementById('nomeSearch');
         const turma1Search = document.getElementById('turma1Search');
@@ -424,7 +424,7 @@
 
         function goToRecordForm() {
             sessionStorage.setItem('forceCreateRecord', '1');
-            window.location.href = 'gestaoatestados2.html';
+            window.location.href = 'index.html';
         }
 
         function renderResults(rows) {
@@ -475,7 +475,7 @@
                 renderResults(Array.isArray(result.records) ? result.records : []);
             } catch (error) {
                 if (String(error.message || '').toLowerCase().includes('nao autenticado')) {
-                    window.location.href = 'gestaoatestados2.html';
+                    window.location.href = 'index.html';
                     return;
                 }
                 alert(error.message);
@@ -558,7 +558,7 @@
                 pageTitle.textContent = reportTitle;
                 document.title = reportTitle;
             } catch (error) {
-                window.location.href = 'gestaoatestados2.html';
+                window.location.href = 'index.html';
             }
         })();
     </script>

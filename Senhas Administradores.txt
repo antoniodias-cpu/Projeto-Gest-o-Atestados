@@ -22,16 +22,16 @@ Node (recomendado)
 No diretório node:
 npm install
 npm start
-Abrir: http://localhost:3000
+Abrir: ./index.html
 
 PHP
 Na raiz do projeto HTML:
 php -S localhost:8000 backend/php/router.php
-Abrir: http://localhost:8000
+Abrir: ./index.html
 
 Aqui...
 
-http://localhost:3000/gestaoatestados2.html
+./index.html
 
 Usuários iniciais criados automaticamente:
 
@@ -46,4 +46,4 @@ Senha123
 
 
 
-na página gestaoatestados2.html ocultar os campos de busca Nome completo, Turma, Data de Entrega, Data de Início Hora de Início, Data de Término. Hora de Término e o radio button Turno e o radio button Selecione o Motivo do Atestado
+na página index.html ocultar os campos de busca Nome completo, Turma, Data de Entrega, Data de Início Hora de Início, Data de Término. Hora de Término e o radio button Turno e o radio button Selecione o Motivo do Atestado

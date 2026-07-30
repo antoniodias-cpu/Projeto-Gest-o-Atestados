@@ -174,7 +174,7 @@
         const btnCancelRegister = document.getElementById('btnCancelRegister');
         const registerMsg = document.getElementById('registerMensagem');
         const registerCity = document.getElementById('registerCity');
-        const API_BASE = '/api';
+        const API_BASE = './api';
 
         const allowedDomain = '@profe.sed.sc.gov.br';
 
@@ -200,7 +200,7 @@
         }
 
         btnCancelRegister.addEventListener('click', function() {
-            window.location.href = 'gestaoatestados2.html';
+            window.location.href = 'index.html';
         });
 
         formRegistrar.addEventListener('submit', async function(e) {
@@ -258,7 +258,7 @@
                 registerMsg.innerText = `Usuario cadastrado com sucesso! Cidade: ${cidade}`;
 
                 setTimeout(function() {
-                    window.location.href = 'gestaoatestados2.html';
+                    window.location.href = 'index.html';
                 }, 700);
             } catch (error) {
                 registerMsg.className = 'erro';

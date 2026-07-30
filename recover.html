@@ -99,7 +99,7 @@
     </div>
 
     <script>
-        const API_BASE = '/api';
+        const API_BASE = './api';
         const email = document.getElementById('email');
         const token = document.getElementById('token');
         const newPassword = document.getElementById('newPassword');
@@ -164,7 +164,7 @@
                 });
                 showMessage(result.message || 'Senha redefinida com sucesso.', true);
                 setTimeout(function() {
-                    window.location.href = 'gestaoatestados2.html';
+                    window.location.href = 'index.html';
                 }, 1200);
             } catch (error) {
                 showMessage(error.message, false);
@@ -172,7 +172,7 @@
         });
 
         btnBack.addEventListener('click', function() {
-            window.location.href = 'gestaoatestados2.html';
+            window.location.href = 'index.html';
         });
 
         (function prefillTokenFromQuery() {

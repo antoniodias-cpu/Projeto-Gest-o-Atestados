@@ -293,7 +293,7 @@
         const legendNoturno = document.getElementById('legendNoturno');
         const legendEmiep = document.getElementById('legendEmiep');
 
-        const API_BASE = '/api';
+        const API_BASE = './api';
         let currentUser = null;
         let currentRecords = [];
 
@@ -316,7 +316,7 @@
 
         function goToRecordForm() {
             sessionStorage.setItem('forceCreateRecord', '1');
-            window.location.href = 'gestaoatestados2.html';
+            window.location.href = 'index.html';
         }
 
         function canDeleteRecords() {
@@ -468,7 +468,7 @@
                 const result = await apiRequest('/auth/me');
                 currentUser = result.user || null;
             } catch (error) {
-                window.location.href = 'gestaoatestados2.html';
+                window.location.href = 'index.html';
                 return;
             }
             updatePageTitle();
@@ -538,7 +538,7 @@
                 await apiRequest('/auth/logout', { method: 'POST' });
             } catch (error) {
             }
-            window.location.href = 'gestaoatestados2.html';
+            window.location.href = 'index.html';
         });
 
         loadSession();
