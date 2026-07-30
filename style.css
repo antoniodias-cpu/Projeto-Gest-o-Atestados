@@ -1,0 +1,20 @@
+:root {
+  --color-bg: #f7f8fa;
+  --color-text: #1f2937;
+  --color-primary: #2563eb;
+}
+
+/* Shared global base styles used by all pages */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
