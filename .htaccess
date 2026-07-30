@@ -1,6 +1,5 @@
 RewriteEngine On
 
-# Route /api/* requests to index.php when the target file/folder does not exist.
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^ index.php [QSA,L]
+# Protect database and SQL export artifacts from direct web access.
+RewriteRule ^backend/data/ - [F,L,NC]
+RewriteRule ^backend/.*\.(db|sql)$ - [F,L,NC]
