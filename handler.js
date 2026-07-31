@@ -6,6 +6,12 @@ const AUTH_COOKIE = 'gestao_auth';
 const AUTH_TTL_MS = 1000 * 60 * 60 * 8;
 const SEED_PASSWORD = 'Senha123';
 const ALLOWED_EMAIL_DOMAIN = '@profe.sed.sc.gov.br';
+const CORS_ORIGIN_WHITELIST = new Set([
+  'https://projeto-gest-o-atestados-zim2.vercel.app',
+  'http://localhost:3000',
+  'http://localhost:8000',
+  'null'
+]);
 
 let poolPromise = null;
 let seedPasswordHash = null;
@@ -158,6 +164,34 @@ function parseCookies(req) {
   return cookies;
 }
 
+function getRequestOrigin(req) {
+  const origin = String(req.headers.origin || req.headers.Origin || '').trim();
+  if (origin) return origin;
+
+  const referer = String(req.headers.referer || req.headers.Referrer || '').trim();
+  if (!referer) return '';
+
+  try {
+    return new URL(referer).origin;
+  } catch {
+    return '';
+  }
+}
+
+function getCorsHeaders(req) {
+  const origin = getRequestOrigin(req);
+  if (!origin || !CORS_ORIGIN_WHITELIST.has(origin)) {
+    return {};
+  }
+
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
+  };
+}
+
 function authSecret() {
   return String(process.env.AUTH_SECRET || process.env.SESSION_SECRET || 'troque-esta-chave-em-producao');
 }
@@ -190,24 +224,31 @@ function verifyAuthToken(token) {
   }
 }
 
-function cookieOptions() {
+function cookieOptions(req) {
+  const origin = getRequestOrigin(req);
+  const isCrossOrigin = !!origin && origin !== 'https://projeto-gest-o-atestados-zim2.vercel.app';
   const parts = [
     `${AUTH_COOKIE}=%s`,
     'HttpOnly',
     'Path=/',
-    'SameSite=Lax',
     `Max-Age=${Math.floor(AUTH_TTL_MS / 1000)}`
   ];
 
-  if (String(process.env.NODE_ENV || '').toLowerCase() === 'production') {
+  if (isCrossOrigin) {
+    parts.push('SameSite=None');
     parts.push('Secure');
+  } else {
+    parts.push('SameSite=Lax');
+    if (String(process.env.NODE_ENV || '').toLowerCase() === 'production') {
+      parts.push('Secure');
+    }
   }
 
   return parts.join('; ');
 }
 
-function setAuthCookie(res, token) {
-  res.setHeader('Set-Cookie', cookieOptions().replace('%s', encodeURIComponent(token)));
+function setAuthCookie(req, res, token) {
+  res.setHeader('Set-Cookie', cookieOptions(req).replace('%s', encodeURIComponent(token)));
 }
 
 function clearAuthCookie(res) {
@@ -301,7 +342,7 @@ function getPathSegments(req) {
 
 async function handleHealth(req, res) {
   const db = String(process.env.DB_DATABASE || '').trim();
-  send(res, 200, { ok: true, provider: 'vercel-node', db, now: new Date().toISOString() });
+  send(res, 200, { ok: true, provider: 'vercel-node', db, now: new Date().toISOString() }, getCorsHeaders(req));
 }
 
 async function handleLogin(req, res) {
@@ -321,21 +362,21 @@ async function handleLogin(req, res) {
   }
 
   const token = signAuthPayload({ userId: Number(user.id), exp: Date.now() + AUTH_TTL_MS });
-  setAuthCookie(res, token);
-  return send(res, 200, { ok: true, user: sanitizeUser(user) });
+  setAuthCookie(req, res, token);
+  return send(res, 200, { ok: true, user: sanitizeUser(user) }, getCorsHeaders(req));
 }
 
 async function handleLogout(req, res) {
   clearAuthCookie(res);
-  return send(res, 200, { ok: true });
+  return send(res, 200, { ok: true }, getCorsHeaders(req));
 }
 
 async function handleMe(req, res) {
   const user = await getCurrentUser(req);
   if (!user) {
-    return send(res, 401, { ok: false, message: 'Nao autenticado.' });
+    return send(res, 401, { ok: false, message: 'Nao autenticado.' }, getCorsHeaders(req));
   }
-  return send(res, 200, { ok: true, user: sanitizeUser(user) });
+  return send(res, 200, { ok: true, user: sanitizeUser(user) }, getCorsHeaders(req));
 }
 
 async function handleRegister(req, res) {
@@ -347,18 +388,18 @@ async function handleRegister(req, res) {
   const city = String(body.city || '').trim();
 
   if (!professorName || !email || !password || !city) {
-    return send(res, 400, { ok: false, message: 'Preencha todos os campos obrigatorios.' });
+    return send(res, 400, { ok: false, message: 'Preencha todos os campos obrigatorios.' }, getCorsHeaders(req));
   }
   if (!isAllowedEmail(email)) {
-    return send(res, 400, { ok: false, message: 'O email deve terminar com @profe.sed.sc.gov.br.' });
+    return send(res, 400, { ok: false, message: 'O email deve terminar com @profe.sed.sc.gov.br.' }, getCorsHeaders(req));
   }
   if (password.length < 6) {
-    return send(res, 400, { ok: false, message: 'A senha precisa ter pelo menos 6 caracteres.' });
+    return send(res, 400, { ok: false, message: 'A senha precisa ter pelo menos 6 caracteres.' }, getCorsHeaders(req));
   }
 
   const [existing] = await pool.query('SELECT id FROM users WHERE email = ? LIMIT 1', [email]);
   if (existing.length) {
-    return send(res, 409, { ok: false, message: 'Ja existe usuario com este email.' });
+    return send(res, 409, { ok: false, message: 'Ja existe usuario com este email.' }, getCorsHeaders(req));
   }
 
   const [result] = await pool.query(
@@ -370,7 +411,7 @@ async function handleRegister(req, res) {
     'SELECT id, professor_name, email, city, role, created_at FROM users WHERE id = ? LIMIT 1',
     [result.insertId]
   );
-  return send(res, 201, { ok: true, user: sanitizeUser(createdRows[0]) });
+  return send(res, 201, { ok: true, user: sanitizeUser(createdRows[0]) }, getCorsHeaders(req));
 }
 
 async function handlePasswordForgot(req, res) {
@@ -380,13 +421,13 @@ async function handlePasswordForgot(req, res) {
   const generic = { ok: true, message: 'Se o email existir, as instrucoes de recuperacao foram geradas.' };
 
   if (!email || !isAllowedEmail(email)) {
-    return send(res, 200, generic);
+    return send(res, 200, generic, getCorsHeaders(req));
   }
 
   const [rows] = await pool.query('SELECT * FROM users WHERE email = ? LIMIT 1', [email]);
   const user = rows[0];
   if (!user) {
-    return send(res, 200, generic);
+    return send(res, 200, generic, getCorsHeaders(req));
   }
 
   const token = makeResetToken();
@@ -401,7 +442,7 @@ async function handlePasswordForgot(req, res) {
     payload.resetToken = token;
     payload.resetExpiresAt = expiresAt;
   }
-  return send(res, 200, payload);
+  return send(res, 200, payload, getCorsHeaders(req));
 }
 
 async function handlePasswordReset(req, res) {
@@ -411,10 +452,10 @@ async function handlePasswordReset(req, res) {
   const newPassword = String(body.newPassword || '');
 
   if (!token || !newPassword) {
-    return send(res, 400, { ok: false, message: 'Token e nova senha sao obrigatorios.' });
+    return send(res, 400, { ok: false, message: 'Token e nova senha sao obrigatorios.' }, getCorsHeaders(req));
   }
   if (newPassword.length < 6) {
-    return send(res, 400, { ok: false, message: 'A nova senha deve ter ao menos 6 caracteres.' });
+    return send(res, 400, { ok: false, message: 'A nova senha deve ter ao menos 6 caracteres.' }, getCorsHeaders(req));
   }
 
   const tokenHash = hashToken(token);
@@ -424,30 +465,30 @@ async function handlePasswordReset(req, res) {
   );
   const resetRow = rows[0];
   if (!resetRow || resetRow.used_at || new Date(resetRow.expires_at).getTime() < Date.now()) {
-    return send(res, 400, { ok: false, message: 'Token invalido ou expirado.' });
+    return send(res, 400, { ok: false, message: 'Token invalido ou expirado.' }, getCorsHeaders(req));
   }
 
   await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [bcrypt.hashSync(newPassword, 10), resetRow.user_id]);
   await pool.query('UPDATE password_reset_tokens SET used_at = CURRENT_TIMESTAMP WHERE id = ?', [resetRow.id]);
-  return send(res, 200, { ok: true, message: 'Senha redefinida com sucesso.' });
+  return send(res, 200, { ok: true, message: 'Senha redefinida com sucesso.' }, getCorsHeaders(req));
 }
 
 async function handleUsersList(req, res) {
   const user = await getCurrentUser(req);
-  if (!user) return send(res, 401, { ok: false, message: 'Nao autenticado.' });
-  if (user.role !== 'admin') return send(res, 403, { ok: false, message: 'Apenas admin pode executar esta acao.' });
+  if (!user) return send(res, 401, { ok: false, message: 'Nao autenticado.' }, getCorsHeaders(req));
+  if (user.role !== 'admin') return send(res, 403, { ok: false, message: 'Apenas admin pode executar esta acao.' }, getCorsHeaders(req));
 
   const pool = await initAndGetPool();
   const [rows] = await pool.query(
     'SELECT id, professor_name, email, city, role, created_at FROM users ORDER BY professor_name ASC'
   );
-  return send(res, 200, { ok: true, users: rows.map(sanitizeUser) });
+  return send(res, 200, { ok: true, users: rows.map(sanitizeUser) }, getCorsHeaders(req));
 }
 
 async function handleUsersCreate(req, res) {
   const user = await getCurrentUser(req);
-  if (!user) return send(res, 401, { ok: false, message: 'Nao autenticado.' });
-  if (user.role !== 'admin') return send(res, 403, { ok: false, message: 'Apenas admin pode executar esta acao.' });
+  if (!user) return send(res, 401, { ok: false, message: 'Nao autenticado.' }, getCorsHeaders(req));
+  if (user.role !== 'admin') return send(res, 403, { ok: false, message: 'Apenas admin pode executar esta acao.' }, getCorsHeaders(req));
 
   const pool = await initAndGetPool();
   const body = parseJsonBody(req);
@@ -458,15 +499,15 @@ async function handleUsersCreate(req, res) {
   const role = String(body.role || 'user') === 'admin' ? 'admin' : 'user';
 
   if (!professorName || !email || !password || !city) {
-    return send(res, 400, { ok: false, message: 'Preencha todos os campos obrigatorios.' });
+    return send(res, 400, { ok: false, message: 'Preencha todos os campos obrigatorios.' }, getCorsHeaders(req));
   }
   if (!isAllowedEmail(email)) {
-    return send(res, 400, { ok: false, message: 'O email deve terminar com @profe.sed.sc.gov.br.' });
+    return send(res, 400, { ok: false, message: 'O email deve terminar com @profe.sed.sc.gov.br.' }, getCorsHeaders(req));
   }
 
   const [existing] = await pool.query('SELECT id FROM users WHERE email = ? LIMIT 1', [email]);
   if (existing.length) {
-    return send(res, 409, { ok: false, message: 'Ja existe usuario com este email.' });
+    return send(res, 409, { ok: false, message: 'Ja existe usuario com este email.' }, getCorsHeaders(req));
   }
 
   const [result] = await pool.query(
@@ -474,13 +515,13 @@ async function handleUsersCreate(req, res) {
     [professorName, email, bcrypt.hashSync(password, 10), city, role]
   );
   const [createdRows] = await pool.query('SELECT id, professor_name, email, city, role, created_at FROM users WHERE id = ? LIMIT 1', [result.insertId]);
-  return send(res, 201, { ok: true, user: sanitizeUser(createdRows[0]) });
+  return send(res, 201, { ok: true, user: sanitizeUser(createdRows[0]) }, getCorsHeaders(req));
 }
 
 async function handleUsersUpdate(req, res, id) {
   const user = await getCurrentUser(req);
-  if (!user) return send(res, 401, { ok: false, message: 'Nao autenticado.' });
-  if (user.role !== 'admin') return send(res, 403, { ok: false, message: 'Apenas admin pode executar esta acao.' });
+  if (!user) return send(res, 401, { ok: false, message: 'Nao autenticado.' }, getCorsHeaders(req));
+  if (user.role !== 'admin') return send(res, 403, { ok: false, message: 'Apenas admin pode executar esta acao.' }, getCorsHeaders(req));
 
   const pool = await initAndGetPool();
   const body = parseJsonBody(req);
@@ -491,12 +532,12 @@ async function handleUsersUpdate(req, res, id) {
   const password = String(body.password || '');
 
   if (!professorName || !email || !city) {
-    return send(res, 400, { ok: false, message: 'Preencha todos os campos obrigatorios.' });
+    return send(res, 400, { ok: false, message: 'Preencha todos os campos obrigatorios.' }, getCorsHeaders(req));
   }
 
   const [collision] = await pool.query('SELECT id FROM users WHERE email = ? AND id != ? LIMIT 1', [email, id]);
   if (collision.length) {
-    return send(res, 409, { ok: false, message: 'Ja existe usuario com este email.' });
+    return send(res, 409, { ok: false, message: 'Ja existe usuario com este email.' }, getCorsHeaders(req));
   }
 
   if (password) {
@@ -513,28 +554,28 @@ async function handleUsersUpdate(req, res, id) {
 
   const [updatedRows] = await pool.query('SELECT id, professor_name, email, city, role, created_at FROM users WHERE id = ? LIMIT 1', [id]);
   if (!updatedRows.length) {
-    return send(res, 404, { ok: false, message: 'Usuario nao encontrado.' });
+    return send(res, 404, { ok: false, message: 'Usuario nao encontrado.' }, getCorsHeaders(req));
   }
-  return send(res, 200, { ok: true, user: sanitizeUser(updatedRows[0]) });
+  return send(res, 200, { ok: true, user: sanitizeUser(updatedRows[0]) }, getCorsHeaders(req));
 }
 
 async function handleUsersDelete(req, res, id) {
   const user = await getCurrentUser(req);
-  if (!user) return send(res, 401, { ok: false, message: 'Nao autenticado.' });
-  if (user.role !== 'admin') return send(res, 403, { ok: false, message: 'Apenas admin pode executar esta acao.' });
+  if (!user) return send(res, 401, { ok: false, message: 'Nao autenticado.' }, getCorsHeaders(req));
+  if (user.role !== 'admin') return send(res, 403, { ok: false, message: 'Apenas admin pode executar esta acao.' }, getCorsHeaders(req));
 
   const pool = await initAndGetPool();
   if (normalizeEmail(user.email) === 'admin123@profe.sed.sc.gov.br' && Number(user.id) === Number(id)) {
-    return send(res, 400, { ok: false, message: 'Nao e permitido apagar o usuario administrador principal.' });
+    return send(res, 400, { ok: false, message: 'Nao e permitido apagar o usuario administrador principal.' }, getCorsHeaders(req));
   }
 
   await pool.query('DELETE FROM users WHERE id = ?', [id]);
-  return send(res, 200, { ok: true, deleted: true });
+  return send(res, 200, { ok: true, deleted: true }, getCorsHeaders(req));
 }
 
 async function handleRecordsList(req, res) {
   const user = await getCurrentUser(req);
-  if (!user) return send(res, 401, { ok: false, message: 'Nao autenticado.' });
+  if (!user) return send(res, 401, { ok: false, message: 'Nao autenticado.' }, getCorsHeaders(req));
 
   const pool = await initAndGetPool();
   const filters = [];
@@ -562,12 +603,12 @@ async function handleRecordsList(req, res) {
     `SELECT id, nome, turma, turno, motivo, data_entrega, data_inicio, hora_inicio, dia_inicio, data_termino, hora_termino, dia_termino, created_at FROM records${where} ORDER BY id DESC`,
     params
   );
-  return send(res, 200, { ok: true, records: rows.map(sanitizeRecord) });
+  return send(res, 200, { ok: true, records: rows.map(sanitizeRecord) }, getCorsHeaders(req));
 }
 
 async function handleRecordCreate(req, res) {
   const user = await getCurrentUser(req);
-  if (!user) return send(res, 401, { ok: false, message: 'Nao autenticado.' });
+  if (!user) return send(res, 401, { ok: false, message: 'Nao autenticado.' }, getCorsHeaders(req));
 
   const body = parseJsonBody(req);
   const pool = await initAndGetPool();
@@ -587,11 +628,11 @@ async function handleRecordCreate(req, res) {
   };
 
   if (!values.nome || !values.turma) {
-    return send(res, 400, { ok: false, message: 'Preencha nome e turma.' });
+    return send(res, 400, { ok: false, message: 'Preencha nome e turma.' }, getCorsHeaders(req));
   }
 
   if (!canWriteRecords(user)) {
-    return send(res, 403, { ok: false, message: 'Sem permissao para gravar atestados.' });
+    return send(res, 403, { ok: false, message: 'Sem permissao para gravar atestados.' }, getCorsHeaders(req));
   }
 
   const [result] = await pool.query(
@@ -604,12 +645,12 @@ async function handleRecordCreate(req, res) {
     'SELECT id, nome, turma, turno, motivo, data_entrega, data_inicio, hora_inicio, dia_inicio, data_termino, hora_termino, dia_termino, created_at FROM records WHERE id = ? LIMIT 1',
     [result.insertId]
   );
-  return send(res, 201, { ok: true, record: sanitizeRecord(createdRows[0]) });
+  return send(res, 201, { ok: true, record: sanitizeRecord(createdRows[0]) }, getCorsHeaders(req));
 }
 
 async function handleRecordUpdate(req, res, id) {
   const user = await getCurrentUser(req);
-  if (!user) return send(res, 401, { ok: false, message: 'Nao autenticado.' });
+  if (!user) return send(res, 401, { ok: false, message: 'Nao autenticado.' }, getCorsHeaders(req));
 
   const body = parseJsonBody(req);
   const pool = await initAndGetPool();
@@ -629,12 +670,12 @@ async function handleRecordUpdate(req, res, id) {
   };
 
   if (!values.nome || !values.turma) {
-    return send(res, 400, { ok: false, message: 'Preencha nome e turma.' });
+    return send(res, 400, { ok: false, message: 'Preencha nome e turma.' }, getCorsHeaders(req));
   }
 
   const [existing] = await pool.query('SELECT id FROM records WHERE id = ? LIMIT 1', [id]);
   if (!existing.length) {
-    return send(res, 404, { ok: false, message: 'Registro nao encontrado.' });
+    return send(res, 404, { ok: false, message: 'Registro nao encontrado.' }, getCorsHeaders(req));
   }
 
   await pool.query(
@@ -646,24 +687,24 @@ async function handleRecordUpdate(req, res, id) {
     'SELECT id, nome, turma, turno, motivo, data_entrega, data_inicio, hora_inicio, dia_inicio, data_termino, hora_termino, dia_termino, created_at FROM records WHERE id = ? LIMIT 1',
     [id]
   );
-  return send(res, 200, { ok: true, record: sanitizeRecord(updatedRows[0]) });
+  return send(res, 200, { ok: true, record: sanitizeRecord(updatedRows[0]) }, getCorsHeaders(req));
 }
 
 async function handleRecordsDelete(req, res) {
   const user = await getCurrentUser(req);
-  if (!user) return send(res, 401, { ok: false, message: 'Nao autenticado.' });
-  if (!canWriteRecords(user)) return send(res, 403, { ok: false, message: 'Sem permissao para apagar atestados.' });
+  if (!user) return send(res, 401, { ok: false, message: 'Nao autenticado.' }, getCorsHeaders(req));
+  if (!canWriteRecords(user)) return send(res, 403, { ok: false, message: 'Sem permissao para apagar atestados.' }, getCorsHeaders(req));
 
   const pool = await initAndGetPool();
   const body = parseJsonBody(req);
   const ids = Array.isArray(body.ids) ? body.ids.map((value) => Number(value)).filter((value) => Number.isInteger(value) && value > 0) : [];
 
   if (!ids.length) {
-    return send(res, 400, { ok: false, message: 'Nenhum registro selecionado para exclusao.' });
+    return send(res, 400, { ok: false, message: 'Nenhum registro selecionado para exclusao.' }, getCorsHeaders(req));
   }
 
   await pool.query(`DELETE FROM records WHERE id IN (${ids.map(() => '?').join(', ')})`, ids);
-  return send(res, 200, { ok: true, deletedCount: ids.length });
+  return send(res, 200, { ok: true, deletedCount: ids.length }, getCorsHeaders(req));
 }
 
 async function handler(req, res) {
@@ -671,6 +712,10 @@ async function handler(req, res) {
     const segments = getPathSegments(req);
     const [first, second] = segments;
     const method = String(req.method || 'GET').toUpperCase();
+
+    if (method === 'OPTIONS') {
+      return send(res, 204, {}, getCorsHeaders(req));
+    }
 
     if (method === 'GET' && (!first || first === 'health')) return handleHealth(req, res);
     if (first === 'auth' && second === 'login' && method === 'POST') return handleLogin(req, res);
@@ -690,9 +735,9 @@ async function handler(req, res) {
     if (first === 'records' && segments[1] && (method === 'PUT' || method === 'POST')) return handleRecordUpdate(req, res, Number(segments[1]));
     if (first === 'records' && method === 'DELETE') return handleRecordsDelete(req, res);
 
-    return send(res, 404, { ok: false, message: 'Endpoint nao encontrado.' });
+    return send(res, 404, { ok: false, message: 'Endpoint nao encontrado.' }, getCorsHeaders(req));
   } catch (error) {
-    return send(res, 500, { ok: false, message: error.message || 'Falha interna no servidor.' });
+    return send(res, 500, { ok: false, message: error.message || 'Falha interna no servidor.' }, getCorsHeaders(req));
   }
 }
 
