@@ -6,8 +6,6 @@
     <title>Gestão de Usuários</title>
     <style>
         body {
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #eef2f7 0%, #d9e2ec 100%);
             color: #0f172a;
         }
@@ -157,6 +155,7 @@
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-WjEM+qOLZJ9+eYVGz01+FtXqcdLcCrc+N4hHGouTcmuV2N7mJaMxLDMiOAXfWiN+5ZNx3SeQdbPw7ZsboYGpRQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="page">
@@ -236,11 +235,13 @@
         const btnCancelUser = document.getElementById('btnCancelUser');
 
         const API_BASE = './api';
+        const API_BASE_FALLBACK = './api/index.php';
 
         let currentUsers = [];
 
         async function apiRequest(path, options = {}) {
-            const response = await fetch(API_BASE + path, {
+            const normalizedPath = String(path || '').startsWith('/') ? String(path) : '/' + String(path || '');
+            const requestInit = {
                 method: options.method || 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -248,13 +249,22 @@
                 },
                 credentials: 'include',
                 body: options.body ? JSON.stringify(options.body) : undefined
-            });
+            };
 
-            let data = null;
-            try {
-                data = await response.json();
-            } catch (error) {
-                data = null;
+            async function send(base) {
+                const response = await fetch(base + normalizedPath, requestInit);
+                let data = null;
+                try {
+                    data = await response.json();
+                } catch (error) {
+                    data = null;
+                }
+                return { response, data };
+            }
+
+            let { response, data } = await send(API_BASE);
+            if (response.status === 404) {
+                ({ response, data } = await send(API_BASE_FALLBACK));
             }
 
             if (!response.ok) {
@@ -441,5 +451,6 @@
 
         loadSessionAndUsers();
     </script>
+    <script src="script.js"></script>
 </body>
 </html>

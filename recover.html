@@ -5,11 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recuperar Senha</title>
     <style>
-        * { box-sizing: border-box; }
         body {
-            margin: 0;
             min-height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #eef2f7 0%, #d9e2ec 100%);
             display: flex;
             align-items: center;
@@ -63,6 +60,7 @@
             border-radius: 6px;
         }
     </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="card">
@@ -100,6 +98,7 @@
 
     <script>
         const API_BASE = './api';
+        const API_BASE_FALLBACK = './api/index.php';
         const email = document.getElementById('email');
         const token = document.getElementById('token');
         const newPassword = document.getElementById('newPassword');
@@ -115,13 +114,25 @@
         }
 
         async function apiRequest(path, options = {}) {
-            const response = await fetch(API_BASE + path, {
+            const normalizedPath = String(path || '').startsWith('/') ? String(path) : '/' + String(path || '');
+            const requestInit = {
                 method: options.method || 'GET',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: options.body ? JSON.stringify(options.body) : undefined
-            });
-            const data = await response.json().catch(() => ({}));
+            };
+
+            async function send(base) {
+                const response = await fetch(base + normalizedPath, requestInit);
+                const data = await response.json().catch(() => ({}));
+                return { response, data };
+            }
+
+            let { response, data } = await send(API_BASE);
+            if (response.status === 404) {
+                ({ response, data } = await send(API_BASE_FALLBACK));
+            }
+
             if (!response.ok) {
                 throw new Error(data.message || 'Falha na comunicacao com o servidor.');
             }
@@ -183,5 +194,6 @@
             }
         })();
     </script>
+    <script src="script.js"></script>
 </body>
 </html>
